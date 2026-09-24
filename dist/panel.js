@@ -1,6 +1,6 @@
 'use strict';
 
-const { toRow, toRowFb, toCSV, toICS, rowStatus, fbStatus, fbProfileUrl, fbAge,
+const { toRow, toRowFb, toRowIg, toCSV, toICS, rowStatus, fbStatus, fbProfileUrl, igProfileUrl, fbAge,
         sortComparator, fieldValue, birthdayOf, shouldAutoRetry, AUTO_RETRY, paceKey,
         effectiveDelay, PLATFORMS, photosHeld, brokenProbes, diagnostic } = globalThis.LIB;
 const { t, setLang, detect, getLang, setNetwork, columnSlugs, LANGS } = globalThis.I18N;
@@ -11,24 +11,30 @@ const $ = (id) => document.getElementById(id);
 const STALE_MS = 30000;
 // Bumping this re-prompts everyone, which is the point if the wording ever
 // changes in a way that matters.
-const DISCLAIMER_VERSION = 2;
+const DISCLAIMER_VERSION = 3;
 const PER_PAGE = 40;
 const REPO = 'https://github.com/tonoid/ExportIn';
 
 // --- which network ------------------------------------------------------
-// One panel, two workers, one of each on screen at a time. Every host, storage
+// One panel, one worker per network, one network on screen at a time. Every host, storage
 // prefix, meta key, column list and file name comes from the descriptor, so
 // switching tab is the only thing that changes.
 
-const NETWORK = { linkedin: 'LinkedIn', facebook: 'Facebook' };
+const NETWORK = { linkedin: 'LinkedIn', facebook: 'Facebook', instagram: 'Instagram' };
+// Where a label reads wrong on another network, the markup carries a variant
+// as data-i18n-fb or data-i18n-ig.
+const VARIANT = { facebook: 'Fb', instagram: 'Ig' };
+const DEFAULT_SORT = { linkedin: ['connected', -1], facebook: ['birthday', 1], instagram: ['name', 1] };
 
 let platform = 'linkedin';
 const P = () => PLATFORMS[platform];
 const isFb = () => platform === 'facebook';
+const isIg = () => platform === 'instagram';
 
 const statusOf = (rec) => (isFb() ? fbStatus(rec) : rowStatus(rec));
-const rowOf = (rec) => (isFb() ? toRowFb(rec) : toRow(rec));
-const linkOf = (rec) => (isFb() ? fbProfileUrl(rec) : `https://www.linkedin.com/in/${rec.publicId}/`);
+const rowOf = (rec) => (isFb() ? toRowFb(rec) : isIg() ? toRowIg(rec) : toRow(rec));
+const linkOf = (rec) =>
+  isFb() ? fbProfileUrl(rec) : isIg() ? igProfileUrl(rec) : `https://www.linkedin.com/in/${rec.publicId}/`;
 const nameOf = (rec) =>
   `${rec.firstName || ''} ${rec.lastName || ''}`.trim() || rec.name || rec.publicId || '';
 
@@ -139,11 +145,12 @@ async function command(cmd) {
 // a connection. Rather than branching in the renderer, the markup names the
 // variant and this picks it.
 function applyI18n() {
+  const v = VARIANT[platform];
   for (const el of document.querySelectorAll('[data-i18n]')) {
-    el.textContent = t((isFb() && el.dataset.i18nFb) || el.dataset.i18n);
+    el.textContent = t((v && el.dataset['i18n' + v]) || el.dataset.i18n);
   }
   for (const el of document.querySelectorAll('[data-i18n-placeholder]')) {
-    el.placeholder = t((isFb() && el.dataset.i18nPlaceholderFb) || el.dataset.i18nPlaceholder);
+    el.placeholder = t((v && el.dataset['i18nPlaceholder' + v]) || el.dataset.i18nPlaceholder);
   }
   document.documentElement.lang = globalThis.I18N.getLang();
   // tonoid.com has a French edition and serves English to everyone else.
@@ -226,13 +233,17 @@ function matches(rec) {
   if (!query) return true;
   const hay = isFb()
     ? rec.name || ''
-    : `${rec.firstName} ${rec.lastName} ${rec.headline || ''} ${fieldValue(rec, 'email')}`;
+    : isIg()
+      ? `${rec.name || ''} ${rec.username || ''} ${rec.bio || ''} ${fieldValue(rec, 'email')}`
+      : `${rec.firstName} ${rec.lastName} ${rec.headline || ''} ${fieldValue(rec, 'email')}`;
   return hay.toLowerCase().includes(query);
 }
 
 function initials(rec) {
-  const first = (rec.firstName || '').trim()[0] || '';
-  const last = (rec.lastName || '').trim()[0] || '';
+  // By code point, not [0]: an emoji name would give half a surrogate pair,
+  // which renders as a replacement glyph.
+  const first = [...(rec.firstName || '').trim()][0] || '';
+  const last = [...(rec.lastName || '').trim()][0] || '';
   return (first + last).toUpperCase() || '?';
 }
 
@@ -250,7 +261,21 @@ function avatar(rec) {
   img.src = rec.photoUrl;
   img.alt = '';
   img.loading = 'lazy';
-  img.onerror = () => img.replaceWith(fallbackAvatar(rec));
+  // Instagram's CDN answers with Cross-Origin-Resource-Policy: same-origin,
+  // so an <img> on this page is refused. A fetch from the extension is not,
+  // thanks to the host permission, so the bytes come in that way instead.
+  img.onerror = async () => {
+    if (img.src.startsWith('blob:')) return img.replaceWith(fallbackAvatar(rec));
+    try {
+      const res = await fetch(rec.photoUrl);
+      if (!res.ok) throw new Error(String(res.status));
+      const url = URL.createObjectURL(await res.blob());
+      img.onload = () => URL.revokeObjectURL(url);
+      img.src = url;
+    } catch {
+      img.replaceWith(fallbackAvatar(rec));
+    }
+  };
   return img;
 }
 
@@ -287,8 +312,9 @@ function whoCell(rec) {
   link.target = '_blank';
   link.rel = 'noreferrer';
   link.textContent = nameOf(rec);
-  // Facebook has no headline, so its rows keep the name alone.
-  const strap = isFb() ? '' : rec.headline || '';
+  // Facebook has no headline, so its rows keep the name alone. Instagram shows
+  // the handle there, which is what people actually recognise.
+  const strap = isFb() ? '' : isIg() ? (rec.username ? '@' + rec.username : '') : rec.headline || '';
   const sub = document.createElement('small');
   sub.textContent = strap;
   sub.title = !isFb() && rec.prevHeadline ? `${rec.prevHeadline}  ->  ${rec.headline}` : strap;
@@ -298,7 +324,8 @@ function whoCell(rec) {
   // headline. Facebook keeps its single strap: its About is the card text,
   // which the strap already shows the first line of.
   if (!isFb()) {
-    const extra = [fieldValue(rec, 'location'), (rec.about || '').replace(/\s+/g, ' ').trim()]
+    const extra = (isIg() ? [rec.bio || ''] : [fieldValue(rec, 'location'), rec.about || ''])
+      .map((text) => text.replace(/\s+/g, ' ').trim())
       .filter(Boolean)
       .join(' \u00b7 ');
     if (extra) {
@@ -352,6 +379,12 @@ function buildRow(rec) {
   const email = cell(mail);
   if (mail) email.title = mail;
 
+  if (isIg()) {
+    tr.append(whoCell(rec), email, cell(fieldValue(rec, 'phone'), 'num c-phone'),
+      cell(fieldValue(rec, 'website')), statusCell(rec));
+    return tr;
+  }
+
   tr.append(
     whoCell(rec),
     cell(localeDate(rec.connectedAt), 'num'),
@@ -382,7 +415,7 @@ function renderList() {
   );
 
   $('empty').style.display = filtered.length ? 'none' : 'block';
-  $('empty').textContent = cache.length ? t('emptyFilter') : t(isFb() ? 'emptyNoneFb' : 'emptyNone');
+  $('empty').textContent = cache.length ? t('emptyFilter') : t('emptyNone' + (VARIANT[platform] || ''));
   $('pageinfo').textContent = filtered.length
     ? `${t('page')} ${page + 1} / ${pages} · ${filtered.length} ${t('shown')}`
     : '';
@@ -487,7 +520,7 @@ function decorate() {
 // is how long the job will take and how exposed it makes them, so that is what
 // the control shows.
 function renderPace(meta, remaining) {
-  const delayMs = meta.delayMs || 4000;
+  const delayMs = meta.delayMs || P().delayMs || 4000;
   const active = paceKey(delayMs);
   const PACE_LABEL = { cautious: 'paceCautious', balanced: 'paceBalanced', fast: 'paceFast', custom: 'paceCustomLabel' };
   for (const button of document.querySelectorAll('#pace button')) {
@@ -541,14 +574,15 @@ function measuredRate(meta) {
 // is inserted, so the others keep their place instead of re-animating.
 let lastSeen = null;
 
-function pushSeen(id, name) {
+function pushSeen(id, name, photoUrl = '') {
   const key = id || name;
   if (!name || key === lastSeen) return;
   lastSeen = key;
 
   // The record carries the photo. It may not be cached yet for someone just
   // discovered, in which case the initials stand in on their own.
-  const rec = byId.get(id) || { firstName: name.split(' ')[0] || name, lastName: name.split(' ')[1] || '' };
+  const rec = byId.get(id)
+    || { firstName: name.split(' ')[0] || name, lastName: name.split(' ')[1] || '', photoUrl };
   const line = document.createElement('div');
   line.className = 'seen';
   const label = document.createElement('span');
@@ -604,7 +638,7 @@ function renderDiff(meta) {
 
 let ticker = null;
 // Phases that are still discovering how many people there are.
-const SCANNING = ['list', 'scan', 'birthdays', 'friends'];
+const SCANNING = ['list', 'scan', 'birthdays', 'friends', 'following', 'followers'];
 
 async function renderProgress() {
   if (!contextAlive()) {
@@ -718,7 +752,12 @@ async function renderProgress() {
       status.textContent += ` ${t('runningFor')} ${duration(Date.now() - meta.startedAt)}.`;
     }
   }
-  if (running) pushSeen(meta.currentId, meta.current);
+  if (running) pushSeen(meta.currentId, meta.current, meta.currentPhoto);
+  // Instagram stores nobody until the followers are read, so an empty table
+  // during the walk means "not yet", not "press Start".
+  if (!cache.length && running && ['following', 'followers'].includes(phase)) {
+    $('empty').textContent = t('emptyScanningIg');
+  }
   else if (phase === 'idle' || phase === 'done') { $('current').replaceChildren(); lastSeen = null; }
 
   const key = startKey(meta);
@@ -749,7 +788,7 @@ async function renderProgress() {
   // Photos come from a different host entirely, but sharing the status line with
   // the scraper would make both harder to read, so they take turns.
   $('photos').disabled = active || !!busy || photoBusy || !cache.some((r) => r.photoUrl);
-  if (document.activeElement !== $('delay')) $('delay').value = meta.delayMs || 4000;
+  if (document.activeElement !== $('delay')) $('delay').value = meta.delayMs || P().delayMs || 4000;
   for (const id of ['withProfile', 'withAbout']) {
     $(id).checked = Boolean(meta[id]);
     $(id).disabled = active;
@@ -777,7 +816,7 @@ async function renderProgress() {
       run: () => openReport(meta),
     };
   } else if (meta.errorKey === 'needPage') {
-    hint = { text: t('err_needPage'), label: t('noticeLearn'), run: showLearnPage };
+    hint = { text: t(isIg() ? 'err_needPageIg' : 'err_needPage'), label: t('noticeLearn'), run: showLearnPage };
   } else if (stalled && recovery === 'retrying') hint = { text: t('notice_retrying') };
   else if (stalled) hint = { text: t('notice_gaveUp'), label: t('noticeReopen'), run: manualRetry };
   else if (staleCache) hint = { text: t('photosNeedRescan'), label: t('fullRescan'), run: () => command('rescan') };
@@ -944,8 +983,7 @@ async function switchPlatform(next) {
   for (const tab of document.querySelectorAll('.tabs button')) {
     tab.setAttribute('aria-selected', String(tab.dataset.platform === platform));
   }
-  sortKey = isFb() ? 'birthday' : 'connected';
-  sortDir = isFb() ? 1 : -1;
+  [sortKey, sortDir] = DEFAULT_SORT[platform];
   page = 0;
   query = '';
   statusFilter = '';
@@ -1080,7 +1118,7 @@ document.addEventListener('keydown', (e) => {
   for (const tab of document.querySelectorAll('.tabs button')) {
     tab.setAttribute('aria-selected', String(tab.dataset.platform === platform));
   }
-  if (isFb()) { sortKey = 'birthday'; sortDir = 1; }
+  [sortKey, sortDir] = DEFAULT_SORT[platform];
   // chrome.i18n.getUILanguage() is the browser's own UI language. navigator.language
   // can follow page or accept-language settings instead, so it is only a fallback.
   const browserLang = chrome.i18n?.getUILanguage?.() || navigator.language;

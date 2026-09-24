@@ -8,7 +8,8 @@
 //
 // This file does exactly that and nothing else: no storage, no chrome.*, no
 // network of its own. It forwards the request body to the isolated world, where
-// content-facebook.js decides what to do with it.
+// content-facebook.js decides what to do with it. Instagram runs on the same
+// Relay stack, so the file is loaded there too, for content-instagram.js.
 //
 // The body carries the page's CSRF token. That is not a new exposure: any script
 // already running on facebook.com can read it from the DOM. It never leaves the
@@ -17,7 +18,7 @@
 (() => {
   'use strict';
 
-  const WANTED = /\/api\/graphql/;
+  const WANTED = /\/api\/graphql|\/graphql\/query/;
 
   // Armed unless told otherwise. The isolated side asks for silence while no
   // collection is running, which spares a message and a parse on every GraphQL
@@ -51,10 +52,13 @@
     // this world can read the module registry, so the question is asked here.
     if (data.__exportin === 'docIdAsk' && /^\w+$/.test(String(data.name))) {
       let id = null;
-      try {
-        id = window.require(data.name + '_facebookRelayOperation');
-      } catch {
-        /* not loaded on this page */
+      for (const suffix of ['_facebookRelayOperation', '_instagramRelayOperation']) {
+        try {
+          id = window.require(data.name + suffix);
+          if (id != null) break;
+        } catch {
+          /* not loaded on this page, or not this network */
+        }
       }
       window.postMessage({ __exportin: 'docId', name: data.name, id: id == null ? null : String(id) }, location.origin);
     }

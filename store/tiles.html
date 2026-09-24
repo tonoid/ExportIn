@@ -25,9 +25,9 @@
   const kind = new URLSearchParams(location.search).get('kind') || 'small';
   document.body.innerHTML = kind === 'small'
     ? `<div class="tile small"><img class="icon" src="../icon.svg">
-         <div><h1>ExportIn</h1><p>Your contacts' birthdays from LinkedIn and Facebook, ready for your CRM</p></div></div>`
+         <div><h1>ExportIn</h1><p>Your contacts from LinkedIn, Facebook and Instagram, ready for your CRM</p></div></div>`
     : `<div class="tile marquee"><div class="copy"><img class="icon" src="../icon.svg">
-         <h1>ExportIn</h1><p>Your contacts' birthdays from LinkedIn and Facebook, ready for an AI agent to enrich your CRM</p>
+         <h1>ExportIn</h1><p>Your contacts' birthdays and details from LinkedIn, Facebook and Instagram, ready for an AI agent to enrich your CRM</p>
          <div class="by">Free and open source, by tonoïd</div></div>
          <img class="shot" src="../docs/screenshots/01-connections.png"></div>`;
 </script>

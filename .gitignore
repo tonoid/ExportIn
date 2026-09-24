@@ -11,5 +11,8 @@ linkedin-birthdays-*.ics
 facebook-friends-*.csv
 facebook-friends-*.json
 facebook-birthdays-*.ics
+instagram-mutuals-*.csv
+instagram-mutuals-*.json
+instagram-mutuals-*.zip
 exportin-*.zip
 ._*

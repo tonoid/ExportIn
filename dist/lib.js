@@ -633,6 +633,113 @@
     ) ? 'updated' : 'same';
   }
 
+  // --- Instagram ----------------------------------------------------------
+  // Plain JSON from the same private API the web app calls, so no tree walk.
+  // Records reuse LinkedIn's per-person shape (contactDone, contactError,
+  // email, phone, website), which is what lets rowStatus, the sort keys and the
+  // "resume" logic in the panel serve both without a branch.
+
+  function igUser(u) {
+    if (!u || typeof u.username !== 'string' || !u.username) return null;
+    const id = String(u.pk ?? u.pk_id ?? u.id ?? '');
+    if (!/^\d+$/.test(id)) return null;
+    const name = String(u.full_name || '').trim();
+    const rec = { publicId: id, username: u.username, name, ...splitName(name) };
+    if (typeof u.profile_pic_url === 'string' && u.profile_pic_url.startsWith('https://')) {
+      rec.photoUrl = u.profile_pic_url;
+    }
+    if (u.is_private) rec.isPrivate = true;
+    if (u.is_verified) rec.isVerified = true;
+    return rec;
+  }
+
+  // One page of /friendships/<id>/following or /followers. `raw` separates an
+  // empty list from a list whose shape we no longer understand.
+  function igList(json) {
+    const users = (json && Array.isArray(json.users)) ? json.users : [];
+    const next = json && json.next_max_id != null && json.next_max_id !== '' ? String(json.next_max_id) : null;
+    return { people: users.map(igUser).filter(Boolean), next, raw: users.length };
+  }
+
+  const EMAIL_IN_TEXT = /[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[a-z]{2,}/i;
+
+  // Either profile route: users/<id>/info answers { user }, web_profile_info
+  // answers { data: { user } }, with a few fields named differently. Business
+  // and creator accounts publish an email and a phone; everyone else gets a
+  // bio and maybe a link. An email written in the bio is taken too, since that
+  // is where personal accounts put theirs.
+  function igProfile(json) {
+    const u = json && ((json.data && json.data.user) || json.user);
+    if (!u || typeof u.username !== 'string') return null;
+    const bio = String(u.biography || '').trim();
+    const firstLink = Array.isArray(u.bio_links) && u.bio_links.find((l) => l && l.url);
+    const pick = (key, ...values) => values.map((v) => (v == null ? '' : String(v).trim())).find((v) => acceptable(key, v)) || '';
+    const phone = u.business_phone_number || u.public_phone_number || u.contact_phone_number;
+    const code = u.public_phone_country_code || u.business_phone_country_code;
+    const out = {
+      bio,
+      email: pick('email', u.business_email, u.public_email, (bio.match(EMAIL_IN_TEXT) || [])[0]),
+      phone: pick('phone', phone && code && !String(phone).startsWith('+') ? `+${code} ${phone}` : phone),
+      website: pick('website', u.external_url, firstLink && firstLink.url),
+      category: String(u.category_name || u.business_category_name || u.category || '').trim(),
+    };
+    const followers = u.edge_followed_by ? u.edge_followed_by.count : u.follower_count;
+    if (followers != null && Number.isFinite(Number(followers))) out.followers = Number(followers);
+    const hd = u.profile_pic_url_hd || (u.hd_profile_pic_url_info && u.hd_profile_pic_url_info.url);
+    if (typeof hd === 'string' && hd.startsWith('https://')) out.photoUrl = hd;
+    return out;
+  }
+
+  // Instagram says it is unhappy in the body as often as in the status code.
+  function igBlock(status, url, json) {
+    if (/\/accounts\/login/.test(url || '') || (json && json.require_login)) return 'noSession';
+    if (/\/challenge\//.test(url || '') || (json && (json.checkpoint_url || json.message === 'checkpoint_required'))) {
+      return 'checkpoint';
+    }
+    if (status === 429 || (json && (json.spam || json.message === 'feedback_required'
+        || /wait a few minutes/i.test(String(json.message || ''))))) return 'rateLimited';
+    return null;
+  }
+
+  const igProfileUrl = (rec) => (rec.username ? `https://www.instagram.com/${rec.username}/` : '');
+
+  const IG_COLUMNS = [
+    'firstName', 'lastName', 'name', 'username', 'profileUrl', 'email', 'phone', 'website',
+    'bio', 'category', 'followers', 'verified', 'private', 'photoUrl', 'instagramId',
+    'firstSeen', 'lastSeen', 'removed', 'note',
+  ];
+
+  function toRowIg(rec) {
+    return {
+      firstName: rec.firstName || '',
+      lastName: rec.lastName || '',
+      name: rec.name || '',
+      username: rec.username || '',
+      profileUrl: igProfileUrl(rec),
+      email: fieldValue(rec, 'email'),
+      phone: fieldValue(rec, 'phone'),
+      website: fieldValue(rec, 'website'),
+      bio: rec.bio || '',
+      category: rec.category || '',
+      followers: rec.followers ?? '',
+      verified: rec.isVerified ? 'yes' : '',
+      private: rec.isPrivate ? 'yes' : '',
+      photoUrl: rec.photoUrl || '',
+      instagramId: rec.publicId || '',
+      publicId: rec.publicId || '',
+      firstSeen: rec.firstSeen ? new Date(rec.firstSeen).toISOString().slice(0, 10) : '',
+      lastSeen: rec.lastSeen ? new Date(rec.lastSeen).toISOString().slice(0, 10) : '',
+      removed: rec.removed ? 'yes' : '',
+      note: rec.contactError || '',
+    };
+  }
+
+  // Following and followers intersected. Only the mutuals are kept: a one-way
+  // follow is a brand or a stranger far more often than someone you know.
+  function igMutuals(following, followerIds) {
+    return [...following.values()].filter((p) => followerIds.has(p.publicId));
+  }
+
   // --- Breakage detection --------------------------------------------------
   // A scraper does not break with an error. It breaks with a 200 OK whose shape
   // it no longer understands, which looks exactly like a run of people who share
@@ -652,6 +759,10 @@
     about: { min: 20, floor: 0 },
     birthdays: { min: 2, floor: 0.4 },
     friends: { min: 2, floor: 0.4 },
+    following: { min: 2, floor: 0.4 },
+    followers: { min: 2, floor: 0.4 },
+    // Every answer carries a username, so zero yields means a shape change.
+    igProfile: { min: 20, floor: 0 },
   };
 
   const PROBE_KEYS = Object.keys(PROBES);
@@ -714,6 +825,7 @@
       match: 'https://www.linkedin.com/*',
       openUrl: 'https://www.linkedin.com/feed/',
       fileStem: 'linkedin-connections',
+      delayMs: 4000,
       icsStem: 'linkedin-birthdays',
       columns: COLUMNS,
       photoKey: (id) => id,
@@ -730,6 +842,20 @@
       // LinkedIn photos were stored under the bare id before this existed, so
       // only the new side gets a namespace. Nothing on disk has to move.
       photoKey: (id) => 'fb:' + id,
+    },
+    instagram: {
+      key: 'instagram',
+      prefix: 'i:',
+      metaKey: 'metaIg',
+      match: 'https://www.instagram.com/*',
+      openUrl: 'https://www.instagram.com/',
+      fileStem: 'instagram-mutuals',
+      icsStem: 'instagram-birthdays',
+      columns: IG_COLUMNS,
+      photoKey: (id) => 'ig:' + id,
+      // Instagram throttles profile lookups harder than LinkedIn does contact
+      // overlays, so it starts on the cautious preset.
+      delayMs: 7000,
     },
   };
 
@@ -784,6 +910,7 @@
     name: (r) => `${r.firstName || ''} ${r.lastName || ''}`.trim().toLowerCase(),
     connected: (r) => r.connectedAt || 0,
     email: (r) => (r.email || '').toLowerCase(),
+    website: (r) => (r.website || '').toLowerCase(),
     phone: (r) => (r.phone || '').replace(/[^\d+]/g, ''),
     // Facebook hands over real numbers; LinkedIn only ever renders a date as
     // text. One key reads both so the table needs no per-platform sorting.
@@ -869,6 +996,7 @@
     fbJsonLines, fbPeople, fbPageInfo, fbRecord, fbSynthBody, fbRemovals, fbAge, fbProfileUrl,
     birthdayOf, fbMutual,
     toRowFb, fbStatus, fbDiffRecord, splitName, FB_COLUMNS, FB_DIFF_FIELDS,
+    igUser, igList, igProfile, igBlock, igProfileUrl, igMutuals, toRowIg, IG_COLUMNS,
     PLATFORMS, PLATFORM_KEYS, photosHeld,
     PROBES, PROBE_KEYS, noteProbe, probeVerdict, brokenProbes, diagnostic,
   };

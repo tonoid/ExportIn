@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ExportIn",
-  "version": "1.0.0",
-  "description": "Export birthdays and contact details from LinkedIn and Facebook to CSV, for an AI agent to enrich your CRM.",
+  "version": "1.1.0",
+  "description": "Export birthdays and contact details from LinkedIn, Facebook and Instagram to CSV, for an AI agent to enrich your CRM.",
   "permissions": [
     "storage",
     "unlimitedStorage"
@@ -11,7 +11,9 @@
     "https://www.linkedin.com/*",
     "https://media.licdn.com/*",
     "https://www.facebook.com/*",
-    "https://*.fbcdn.net/*"
+    "https://*.fbcdn.net/*",
+    "https://www.instagram.com/*",
+    "https://*.cdninstagram.com/*"
   ],
   "icons": {
     "16": "icons/16.png",
@@ -45,7 +47,8 @@
     },
     {
       "matches": [
-        "https://www.facebook.com/*"
+        "https://www.facebook.com/*",
+        "https://www.instagram.com/*"
       ],
       "js": [
         "fb-hook.js"
@@ -61,6 +64,17 @@
       "js": [
         "lib.js",
         "content-facebook.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "lib.js",
+        "content-instagram.js"
       ],
       "run_at": "document_idle",
       "all_frames": false

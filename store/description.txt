@@ -8,24 +8,27 @@ Name, headline, profile URL and the exact date you connected, then from each pro
 FACEBOOK
 Name, photo, profile URL, birthday with the birth year when the friend shares it, age, and the number of mutual friends. About 75 requests for 2000 friends.
 
+INSTAGRAM
+The people you follow who follow you back, with their username, bio, link, category, and any email written in the bio. Instagram has no birthdays.
+
 EXPORTS
-- CSV with the same birthday columns for both networks: an ISO date (1988-03-14) plus day, month and year as separate numbers
+- CSV with the same birthday columns for LinkedIn and Facebook: an ISO date (1988-03-14) plus day, month and year as separate numbers
 - A yearly birthday calendar (.ics)
 - A ZIP with the CSV and every photo
 - JSON
 Column names follow the interface language: English, French or Spanish.
 
 HOW IT BEHAVES
-- Runs from a LinkedIn or Facebook tab it opens in the background, at a slow, adjustable pace
+- Runs from a LinkedIn, Facebook or Instagram tab it opens in the background, at a slow, adjustable pace
 - Caches everything locally: after the first run, a sync only fetches what changed
 - Stops at the first sign of rate limiting or a security check instead of retrying
-- Detects when LinkedIn or Facebook change their format, stops, and offers a prefilled bug report that contains no personal data
+- Detects when a network changes its format, stops, and offers a prefilled bug report that contains no personal data
 
 PRIVACY
-No account, no server, no telemetry, no AI call. Everything stays in your browser. The only sites contacted are LinkedIn and Facebook, with your own session.
+No account, no server, no telemetry, no AI call. Everything stays in your browser. The only sites contacted are LinkedIn, Facebook and Instagram, with your own session.
 
 PLEASE READ
-Automated collection is against LinkedIn's and Facebook's terms, and accounts have been restricted for it. The slow default pace lowers that risk; it does not remove it. What you export is other people's personal data: once it is in your CRM or given to an AI service, you are responsible for it under the GDPR and similar laws.
+Automated collection is against the terms of LinkedIn, Facebook and Instagram, and accounts have been restricted for it. The slow default pace lowers that risk; it does not remove it. What you export is other people's personal data: once it is in your CRM or given to an AI service, you are responsible for it under the GDPR and similar laws.
 
 Free and open source (MIT), made by tonoïd.
 Source code and issues: https://github.com/tonoid/ExportIn

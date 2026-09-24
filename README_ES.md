@@ -2,14 +2,14 @@
 
 # ExportIn
 
-**Una extensión de Chrome que saca de LinkedIn y Facebook los cumpleaños de tus contactos, con sus datos de contacto, para que un agente de IA enriquezca tu CRM. Felicita a la gente el mismo día y retoma el contacto con quienes has perdido de vista. Gratuita y de código abierto.**
+**Una extensión de Chrome que saca de LinkedIn y Facebook los cumpleaños de tus contactos, y de Instagram los datos de contacto de tus seguidores mutuos, para que un agente de IA enriquezca tu CRM. Felicita a la gente el mismo día y retoma el contacto con quienes has perdido de vista. Gratuita y de código abierto.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Made by tonoïd](https://img.shields.io/badge/made%20by-tono%C3%AFd-4e4785.svg)](https://www.tonoid.com)
 
 [English](README.md) · [Français](README_FR.md) · Español
 
-[Aviso legal](#aviso-legal) · [Instalación](#instalación) · [Uso](#uso) · [Qué obtienes](#qué-obtienes) · [Cómo funciona](#cómo-funciona) · [Cuando algo se rompe](#cuando-linkedin-o-facebook-cambian-algo) · [Preguntas frecuentes](#preguntas-frecuentes)
+[Aviso legal](#aviso-legal) · [Instalación](#instalación) · [Uso](#uso) · [Qué obtienes](#qué-obtienes) · [Cómo funciona](#cómo-funciona) · [Cuando algo se rompe](#cuando-una-red-cambia-algo) · [Preguntas frecuentes](#preguntas-frecuentes)
 
 </div>
 
@@ -19,7 +19,7 @@
 
 **Lee esto antes de instalar. La extensión te lo vuelve a preguntar la primera vez que la abres.**
 
-**Condiciones de uso.** ExportIn automatiza peticiones que tu navegador ya hace cuando navegas por LinkedIn y Facebook. Aun así, la recopilación automatizada va contra las condiciones de uso de ambos, y se han restringido y suspendido cuentas por ello. El ritmo por defecto es lento a propósito. Eso reduce el riesgo; no lo elimina.
+**Condiciones de uso.** ExportIn automatiza peticiones que tu navegador ya hace cuando navegas por LinkedIn, Facebook e Instagram. Aun así, la recopilación automatizada va contra las condiciones de uso de los tres, y se han restringido y suspendido cuentas por ello. El ritmo por defecto es lento a propósito. Eso reduce el riesgo; no lo elimina.
 
 **Datos personales.** Lo que exportas son datos personales de otras personas. Una vez en tu CRM, eres responsable de ellos según el RGPD y leyes similares: una finalidad legítima, un plazo de conservación y el derecho de acceso y supresión. Estas personas aceptaron ser tus contactos, no entrar en tu lista de clientes potenciales. Facebook añade el año de nacimiento cuando un amigo lo comparte, lo que da una edad exacta. Trátalo como un dato sensible. Dar el archivo a un servicio de IA es compartirlo con ese servicio, así que comprueba dónde se ejecuta y qué conserva.
 
@@ -36,6 +36,8 @@ Un cumpleaños es la excusa más fácil para retomar el contacto con alguien. Lo
 
 ExportIn saca todos los cumpleaños que encuentra en las dos redes, con los datos que los acompañan, en un CSV por red. Los dos archivos comparten las mismas columnas de cumpleaños. Están pensados para alimentar a un agente de IA que enriquezca tu CRM: reconocer a la misma persona en LinkedIn y Facebook, completar su cumpleaños, redactar un mensaje ese día, señalar a la gente con la que no hablas desde hace un año. Dejas de enterarte de un cumpleaños por una notificación al día siguiente.
 
+Instagram no tiene cumpleaños que dar. Su pestaña exporta a las personas que sigues y que te siguen, con la biografía, el enlace, la categoría, el número de seguidores y cualquier correo escrito en la biografía. Basta para vincular un usuario de Instagram con alguien que ya está en tu CRM.
+
 Algunas decisiones hacen que un agente lea los archivos sin esfuerzo. Las fechas están en ISO (`1988-03-14`), con el día, el mes y el año también en columnas separadas, para que nada tenga que adivinar qué significa `03/04`. En LinkedIn, la sección Acerca de, opcional, añade lo que la persona cuenta de su trabajo, algo real con lo que escribir. Si solo quieres recordatorios, la exportación Cumpleaños convierte las mismas fechas en un calendario anual.
 
 ExportIn no llama a ninguna IA y no envía nada a ningún sitio. Recopila a un ritmo lento y ajustable y lo guarda todo en tu navegador, sin cuenta, sin servidor y sin telemetría. A qué agente le das el archivo, si se lo das, lo decides tú.
@@ -49,7 +51,7 @@ ExportIn no llama a ninguna IA y no envía nada a ningún sitio. Recopila a un r
 
 ## Instalación
 
-**[Instalar desde la Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. La ficha está en revisión; mientras no se publique, el enlace muestra una página vacía. Mientras tanto, descarga `exportin-1.0.0.zip` desde la [última versión](https://github.com/tonoid/ExportIn/releases/latest), o carga el código fuente en modo desarrollador:
+**[Instalar desde la Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. La ficha está en revisión; mientras no se publique, el enlace muestra una página vacía. Mientras tanto, descarga `exportin-1.1.0.zip` desde la [última versión](https://github.com/tonoid/ExportIn/releases/latest), o carga el código fuente en modo desarrollador:
 
 ```bash
 git clone https://github.com/tonoid/ExportIn
@@ -65,9 +67,9 @@ Carga `dist/`, no la raíz del repositorio. El panel se abre solo después de in
 
 ## Uso
 
-Haz clic en el icono de la barra de herramientas. ExportIn se abre en **su propia pestaña**, no en una ventana emergente, así que puedes seguir el progreso mientras trabajas en otra cosa. Tiene una pestaña por red, y las dos pueden recopilar a la vez. Un anillo en cada pestaña muestra el progreso de una tarea que no estás mirando.
+Haz clic en el icono de la barra de herramientas. ExportIn se abre en **su propia pestaña**, no en una ventana emergente, así que puedes seguir el progreso mientras trabajas en otra cosa. Tiene una pestaña por red, y todas pueden recopilar a la vez. Un anillo en cada pestaña muestra el progreso de una tarea que no estás mirando.
 
-Las peticiones salen de una pestaña de LinkedIn o Facebook que ExportIn abre **en segundo plano** y nunca pasa al primer plano. Cerrar esa pestaña pone la tarea en pausa.
+Las peticiones salen de una pestaña de LinkedIn, Facebook o Instagram que ExportIn abre **en segundo plano** y nunca pasa al primer plano. Cerrar esa pestaña pone la tarea en pausa.
 
 | Botón | Qué hace |
 | --- | --- |
@@ -77,7 +79,7 @@ Las peticiones salen de una pestaña de LinkedIn o Facebook que ExportIn abre **
 | **Guardar fotos** | descarga los avatares y los guarda en local |
 | **Pausar** | se detiene después de la petición en curso |
 
-El botón principal cambia de nombre para decir lo que va a hacer de verdad. El menú Exportar también tiene **Análisis completo**, que recorre todas las páginas para encontrar a quienes te han eliminado, y **Borrar los datos** de la red que está en pantalla. **Restablecer todo**, en la parte superior del panel, borra las dos redes, las fotos y los ajustes tras una advertencia.
+El botón principal cambia de nombre para decir lo que va a hacer de verdad. El menú Exportar también tiene **Análisis completo**, que recorre todas las páginas para encontrar a quienes te han eliminado, y **Borrar los datos** de la red que está en pantalla. **Restablecer todo**, en la parte superior del panel, borra todas las redes, las fotos y los ajustes tras una advertencia.
 
 ### La tabla
 
@@ -85,10 +87,10 @@ Cada contacto aparece con su foto, nombre, titular y detalles, 40 por página. H
 
 | Estado | Significado |
 | --- | --- |
-| Pendiente | en cola, detalles aún no obtenidos (LinkedIn) |
+| Pendiente | en cola, detalles aún no obtenidos (LinkedIn, Instagram) |
 | Encontrado | al menos un correo, teléfono, cumpleaños o sitio web; en Facebook, un cumpleaños |
 | Nada | obtenido sin problemas, la persona no comparte nada |
-| Sin acceso | LinkedIn ha denegado este perfil; el motivo está en la descripción emergente |
+| Sin acceso | la red ha denegado este perfil, o ya no existe; el motivo está en la descripción emergente |
 | Eliminado | ausente de la lista en el último análisis completo |
 
 Los cumpleaños se muestran en el idioma del panel en las dos pestañas: "Mar 14", "14 mars", "14 mar".
@@ -110,7 +112,7 @@ Una exportación siempre incluye todos los contactos de esa pestaña, no la pág
 
 **Los nombres de columna siguen el idioma del panel.** Una exportación en francés escribe `prenom,nom,date_anniv,...`, y una en español `nombre,apellido,fecha_cumple,...`. Solo cambia la fila de encabezado; los valores son los mismos en todos los idiomas. Por eso, cambiar el idioma cambia la correspondencia de columnas que recuerda tu CRM.
 
-**Los cumpleaños van en formato ISO.** `dateBday` es `1988-03-14` con el año y `03-14` sin él. `14/03` y `03/14` se leen de forma distinta en dos países, y una importación al CRM nunca pregunta cuál querías decir. `dayBday`, `monthBday` y `yearBday` guardan la misma fecha como números separados. Las dos redes exportan estas cuatro columnas, así que una sola correspondencia en el CRM importa cualquiera de los dos archivos.
+**Los cumpleaños van en formato ISO.** `dateBday` es `1988-03-14` con el año y `03-14` sin él. `14/03` y `03/14` se leen de forma distinta en dos países, y una importación al CRM nunca pregunta cuál querías decir. `dayBday`, `monthBday` y `yearBday` guardan la misma fecha como números separados. LinkedIn y Facebook exportan estas cuatro columnas, así que una sola correspondencia en el CRM importa cualquiera de los dos archivos. Instagram no tiene columnas de cumpleaños.
 
 ---
 
@@ -153,11 +155,33 @@ En una cuenta real de 1486 amigos, el 80% tenía un cumpleaños visible y el 45%
 
 Facebook no expone el correo, el teléfono, el empleo ni la ciudad de los amigos. Llegamos a crear una pasada que leía el empleo y la ciudad de la tarjeta emergente de cada amigo, y luego la quitamos. Costaba una petición por amigo y horas para una cuenta normal, para una línea que la mayoría de los amigos deja vacía.
 
+### Instagram
+
+Solo seguidores mutuos, es decir, personas que sigues y que también te siguen. Seguir en un solo sentido suele ser a una marca o a un desconocido mucho más que a alguien que conoces.
+
+<div align="center">
+  <img src="docs/screenshots/es-08-instagram.png" alt="La pestaña de Instagram con los seguidores mutuos, su usuario, su biografía y su enlace" width="820">
+</div>
+
+| Columna | Origen | Nota |
+| --- | --- | --- |
+| firstName, lastName | separados a partir del nombre | Instagram solo guarda un nombre para mostrar |
+| name, username, profileUrl, instagramId | lista de cuentas que sigues | siempre presente |
+| verified, private | lista de cuentas que sigues | `yes` o vacío |
+| bio, category, followers | perfil | una petición por seguidor mutuo |
+| email | perfil | un correo escrito en la biografía |
+| phone | perfil | casi siempre vacío; la consulta del perfil no trae contacto de empresa |
+| website | perfil | el enlace del perfil, o el primer enlace de la biografía |
+| photoUrl | perfil | enlace firmado que caduca |
+| firstSeen, lastSeen, removed, note | caché local | seguimiento de cambios; `note` guarda el motivo de "Sin acceso" |
+
+Instagram no tiene ningún campo de cumpleaños, así que esta pestaña no exporta calendario. La mayoría de las cuentas personales no publican correo ni teléfono. Espera "Nada" en casi todas las filas, con la biografía y el enlace rellenos igualmente.
+
 ---
 
 ## Cómo funciona
 
-ExportIn reproduce las peticiones que hacen las propias aplicaciones web de LinkedIn y Facebook, desde una pestaña en la que ya has iniciado sesión. No extrae el contenido de las páginas que ves.
+ExportIn reproduce las peticiones que hacen las propias aplicaciones web de LinkedIn, Facebook e Instagram, desde una pestaña en la que ya has iniciado sesión. No extrae el contenido de las páginas que ves.
 
 ### LinkedIn
 
@@ -202,7 +226,7 @@ Facebook solo sirve consultas GraphQL persistidas. Con dos basta.
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-Para 2000 amigos son unas 75 peticiones y unos pocos minutos. Pagas por mes y por página de 30, nunca por persona, lo que hace de Facebook la más barata de las dos redes.
+Para 2000 amigos son unas 75 peticiones y unos pocos minutos. Pagas por mes y por página de 30, nunca por persona, lo que hace de Facebook la más barata de las tres redes.
 
 **No hay ningún `doc_id` escrito en el código.** Una consulta persistida se identifica por un `doc_id` que Facebook renumera en cada despliegue, a veces varias veces por semana. Uno escrito a mano funcionaría unos días y luego fallaría sin avisar. Por eso ExportIn lo lee de la página cada vez:
 
@@ -210,6 +234,25 @@ Para 2000 amigos son unas 75 peticiones y unos pocos minutos. Pagas por mes y po
 - El código de la página ya guarda el `doc_id` de cada consulta en un módulo, mucho antes de enviar la consulta. El hook lo lee del registro de módulos de la página, y la extensión construye la petición a partir del envoltorio de cualquier llamada que la página sí haya enviado (token, sesión y parámetros de compilación), cambiando solo el nombre, el `doc_id` y las variables.
 
 El segundo paso es lo que permite que funcione una pestaña en segundo plano. Una pestaña que no estás mirando no se dibuja ni se desplaza, así que Facebook nunca pide el mes siguiente por sí solo. En una cuenta real, una pestaña en segundo plano envió 12 llamadas GraphQL y ninguna era la consulta de cumpleaños. Si falta el módulo, ExportIn recurre a desplazar la página, lo que solo funciona en una pestaña visible.
+
+### Instagram
+
+Las dos listas vienen de la API REST privada que usa la aplicación web de Instagram, con su propia cabecera `x-ig-app-id`. Los perfiles no: `users/<id>/info` y `web_profile_info` respondían 429 desde la primera llamada mientras la cuenta navegaba con normalidad, porque la aplicación web ahora carga los perfiles por GraphQL. Así que los perfiles repiten la propia consulta de la página, aprendida con `fb-hook.js` igual que en Facebook. Si la página de inicio no ha cargado esa consulta, el worker abre una vez el perfil de un seguidor mutuo para aprenderla.
+
+```
+┌─ 1. Las dos listas ───────────────────────────────────────────────┐
+│ GET /api/v1/friendships/<tú>/following/  y luego  .../followers/  │
+│ 50 por página; la intersección son tus seguidores mutuos          │
+└──────────────────────────┬────────────────────────────────────────┘
+                           │  una petición por seguidor mutuo nuevo
+                           ▼
+┌─ 2. Cada perfil ──────────────────────────────────────────────────┐
+│ POST /api/graphql  PolarisProfilePageContentQuery                 │
+│ → biografía, enlaces, categoría, número de seguidores             │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+Con 800 cuentas seguidas y 900 seguidores, las listas cuestan unas 34 peticiones. Los perfiles son la parte lenta. Hay una petición por seguidor mutuo al ritmo elegido, que empieza en Prudente porque Instagram limita mucho las consultas de perfiles.
 
 ### Caché y sincronización
 
@@ -221,29 +264,31 @@ Todo lo recopilado se queda en disco y nunca se vuelve a pedir. La lista de Link
 | Buscar cambios | normalmente 1 petición | personas nuevas y renombradas |
 | Análisis completo | 1 petición por cada 40 contactos | también a quienes te han eliminado |
 
-Las bajas necesitan el recorrido completo, porque la ausencia en la lista es la única señal que da cualquiera de las dos redes. Un recorrido parcial nunca informa de bajas.
+En Instagram, Sincronizar vuelve a recorrer las dos listas antes de pedir los perfiles nuevos. Un seguidor mutuo nuevo puede ser alguien a quien sigues desde hace años, muy abajo en tu lista, así que la primera página sola no demuestra nada. Reanudar una pasada de perfiles en pausa se salta el recorrido.
+
+Las bajas necesitan el recorrido completo, porque la ausencia en la lista es la única señal que da cualquier red. Un recorrido parcial nunca informa de bajas.
 
 En Facebook, ni siquiera un recorrido completo es una prueba. En una cuenta real, la lista de amigos se detuvo en 1417 de 1486 y aun así se declaró completa, y la mayoría de los amigos que se saltó acababan de aparecer en el barrido de cumpleaños. Por eso se conserva a todo amigo que devuelve ese barrido, y un amigo sin cumpleaños solo se marca como eliminado si la lista no se saltó a ninguno de los amigos confirmados por los cumpleaños.
 
 ### Ritmo y paradas de seguridad
 
-LinkedIn tiene tres ritmos con nombre: **Prudente** (7 s por perfil), **Equilibrado** (4 s, el predeterminado) y **Rápido** (2 s), además de la opción "Espera personalizada". El panel muestra una velocidad medida y una hora de fin, como `14 perfiles/min · quedan 1h 7min · listo hacia 22:12`, a partir del progreso real de los últimos cinco minutos. Cada petición lleva una variación aleatoria de ±40%.
+LinkedIn e Instagram tienen tres ritmos con nombre: **Prudente** (7 s por perfil), **Equilibrado** (4 s) y **Rápido** (2 s), además de la opción "Espera personalizada". LinkedIn empieza en Equilibrado, Instagram en Prudente. El panel muestra una velocidad medida y una hora de fin, como `14 perfiles/min · quedan 1h 7min · listo hacia 22:12`, a partir del progreso real de los últimos cinco minutos. Cada petición lleva una variación aleatoria de ±40%.
 
 El ritmo se adapta solo. Una petición que hay que reintentar alarga la espera y una limpia la relaja, hasta cinco veces el valor elegido y nunca por debajo de él.
 
-Ante un HTTP 429, un 999 o una redirección a un control de seguridad, la tarea **se detiene** en lugar de esperar y reintentar. Un control de seguridad significa que la red ya ha notado algo, e insistir lo empeora. Un 403 en un solo perfil solo significa que esa persona ha cerrado sus datos. ExportIn lo anota y la tarea sigue.
+Ante un HTTP 429, un 999, una redirección a un control de seguridad o el "espera unos minutos" de Instagram, la tarea **se detiene** en lugar de esperar y reintentar. Un control de seguridad significa que la red ya ha notado algo, e insistir lo empeora. Un 403 en un solo perfil solo significa que esa persona ha cerrado sus datos. ExportIn lo anota y la tarea sigue.
 
 Si la pestaña de trabajo muere o deja de responder durante 30 segundos, el panel reinicia la tarea por sí solo, hasta cinco veces, y nunca después de una de las paradas anteriores.
 
 ### Fotos
 
-El `photoUrl` de LinkedIn es un enlace de CDN firmado que caduca al cabo de unos meses. Una foto solo es tuya cuando los bytes están en disco, así que **Guardar fotos** las descarga en IndexedDB. El propio panel las descarga, de cuatro en cuatro, desde `media.licdn.com` y `fbcdn.net`. Son archivos de imagen normales que se descargan sin tu sesión, así que no tienen ninguno de los riesgos de las llamadas a la API.
+El `photoUrl` de LinkedIn es un enlace de CDN firmado que caduca al cabo de unos meses. Una foto solo es tuya cuando los bytes están en disco, así que **Guardar fotos** las descarga en IndexedDB. El propio panel las descarga, de cuatro en cuatro, desde `media.licdn.com`, `fbcdn.net` y `cdninstagram.com`. Son archivos de imagen normales que se descargan sin tu sesión, así que no tienen ninguno de los riesgos de las llamadas a la API.
 
 Las fotos de Facebook llegan como máximo a 120 píxeles. La URL está firmada, y si cambias su parámetro de tamaño, Facebook rechaza la imagen.
 
 ---
 
-## Cuando LinkedIn o Facebook cambian algo
+## Cuando una red cambia algo
 
 Pasará. Esto es lo que hace la extensión al respecto, y lo que no puede hacer.
 
@@ -255,8 +300,8 @@ Un scraper roto no falla con un error. Recibe un `200 OK` cuya forma ya no entie
 
 | Sonda | Se evalúa tras | Mínimo |
 | --- | --- | --- |
-| `list`, `birthdays`, `friends` | 2 peticiones | 40% |
-| `contact`, `profile`, `about` | de 20 a 40 peticiones | 0% |
+| `list`, `birthdays`, `friends`, `following`, `followers` | 2 peticiones | 40% |
+| `contact`, `profile`, `about`, `igProfile` | de 20 a 40 peticiones | 0% |
 
 Una página de la lista casi siempre debería devolver personas, así que bastan dos fallos. Los datos de contacto están vacíos para la mayoría de la gente. Tres respuestas con datos de cada sesenta son datos reales, mientras que cuarenta respuestas vacías seguidas son un cambio de formato.
 
@@ -265,7 +310,7 @@ Cuando salta una sonda, **la tarea se detiene**. Si no, dos mil personas quedar�
 **El informe no contiene datos personales.** Nadie revisa un informe de error antes de enviarlo, así que la garantía no puede depender de ti. ExportIn construye el informe solo con contadores. Ningún registro, nombre, identificador ni token llega nunca a ese código, y una prueba le pasa datos hostiles para comprobarlo.
 
 ```
-ExportIn 1.0.0 | linkedin | ui en
+ExportIn 1.1.0 | linkedin | ui en
 date 2026-09-23
 phase contact | error broken
 detail contact
@@ -282,7 +327,7 @@ contact                40       0  broken
 ## Privacidad
 
 - **Sin cuenta, sin inicio de sesión, sin telemetría.**
-- **No se envía nada a ningún servidor.** No hay servidor. La extensión solo contacta con `linkedin.com`, `media.licdn.com`, `facebook.com` y `fbcdn.net`, con tu propia sesión.
+- **No se envía nada a ningún servidor.** No hay servidor. La extensión solo contacta con `linkedin.com`, `media.licdn.com`, `facebook.com`, `fbcdn.net`, `instagram.com` y `cdninstagram.com`, con tu propia sesión.
 - **Solo almacenamiento local:** `chrome.storage.local` para los registros, IndexedDB para las fotos.
 - El panel construye la tabla con `textContent`, nunca con `innerHTML`. Los nombres y los titulares son texto escrito por otras personas, y el panel tiene privilegios `chrome.*`.
 
@@ -291,10 +336,12 @@ contact                40       0  broken
 ## Limitaciones conocidas
 
 - **Solo Chrome** por ahora.
-- **Tiene que quedar abierta una pestaña de LinkedIn o Facebook.** La tarea se ejecuta en un content script, porque Manifest V3 detiene un service worker tras unos 30 segundos de inactividad, y esta tarea espera entre peticiones a propósito.
+- **Tiene que quedar abierta una pestaña de la red que se está recopilando.** La tarea se ejecuta en un content script, porque Manifest V3 detiene un service worker tras unos 30 segundos de inactividad, y esta tarea espera entre peticiones a propósito.
 - **`title` se deduce del titular de texto libre** salvo que "Puesto y ubicación exactos" esté activado. `CTO at Acme` se separa bien; `Building things | ex-Google` no. ExportIn siempre conserva el titular original.
 - **LinkedIn nunca muestra el año de nacimiento.**
 - **Los enlaces de foto de LinkedIn caducan.** Un análisis completo los renueva, y luego Guardar fotos descarga lo que falte.
+- **Instagram no tiene cumpleaños** y solo exporta seguidores mutuos. Su id de aplicación y sus endpoints no están documentados y van escritos en el código. Cuando Instagram los cambie, las sondas detendrán la tarea y lo dirán.
+- **Las bajas de Instagram no se contrastan.** Facebook nos enseñó que una lista puede saltarse a gente y aun así declararse completa. Las listas de Instagram todavía no tienen esa protección. Una persona marcada como eliminada por error se restaura en la siguiente sincronización que la vea.
 
 ---
 
@@ -317,6 +364,7 @@ dist/                  # lo que carga Chrome
   content.js           # worker de LinkedIn, se ejecuta en la pestaña de LinkedIn
   fb-hook.js           # Facebook, entorno de la página: observa sus llamadas GraphQL
   content-facebook.js  # worker de Facebook, entorno de la extensión
+  content-instagram.js # worker de Instagram
   panel.html, panel.js # la interfaz
   sw.js                # abre la pestaña del panel
   i18n.js              # textos en inglés, francés y español
@@ -340,7 +388,7 @@ test.mjs
 ## Preguntas frecuentes
 
 ### ¿Es legal?
-Accedes a datos que LinkedIn y Facebook ya te muestran, con tu propia sesión, sobre tus propios contactos. Pero automatizar ese acceso incumple las condiciones de uso de ambos, y los datos pertenecen a otras personas. Lee primero el [aviso legal](#aviso-legal).
+Accedes a datos que LinkedIn, Facebook e Instagram ya te muestran, con tu propia sesión, sobre tus propios contactos. Pero automatizar ese acceso incumple sus condiciones de uso, y los datos pertenecen a otras personas. Lee primero el [aviso legal](#aviso-legal).
 
 ### ¿Me bloquearán la cuenta?
 A un ritmo lento y a escala personal estás en la parte baja del riesgo, no en cero. ExportIn se detiene a la primera señal de limitación de peticiones o de un control de seguridad, en lugar de insistir. Un ritmo más lento reduce aún más el riesgo.

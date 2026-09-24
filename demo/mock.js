@@ -6,7 +6,7 @@
 // data has ever been near this file.
 //
 // Drive it with query parameters:
-//   ?state=done|running|sync|stalled|menu|settings|disclaimer&lang=en|fr|es&platform=linkedin|facebook
+//   ?state=done|running|sync|stalled|menu|settings|disclaimer&lang=en|fr|es&platform=linkedin|facebook|instagram
 
 (() => {
   'use strict';
@@ -148,10 +148,32 @@
     store['f:' + rec.publicId] = rec;
   });
 
+  // And as Instagram mutuals: a handle and a bio, with an email only when the
+  // bio carries one. The profile query has no phone, so neither does the demo.
+  ROWS.forEach(([first, last, headline, email], i) => {
+    const handle = `${slug(first)}.${slug(last)}`;
+    const rec = {
+      publicId: String(5000000000 + i * 7919),
+      source: 'instagram',
+      username: handle,
+      name: `${first} ${last}`,
+      firstName: first,
+      lastName: last,
+      photoUrl: avatar(first, last, i),
+      firstSeen: BASE - i * 7 * DAY,
+      lastSeen: BASE,
+      contactDone: true,
+      bio: i % 3 === 0 && email ? `${headline} · ${email}` : headline,
+      ...(i % 3 === 0 ? { email, website: `https://${slug(last)}.studio` } : {}),
+    };
+    store['i:' + rec.publicId] = rec;
+  });
+  const igRecords = Object.keys(store).filter((k) => k.startsWith('i:')).map((k) => store[k]);
+
   const fbRecords = Object.keys(store).filter((k) => k.startsWith('f:')).map((k) => store[k]);
 
   const total = ROWS.length;
-  const fetched = Object.values(store).filter((r) => r.contactDone).length;
+  const fetched = Object.keys(store).filter((k) => k.startsWith('p:') && store[k].contactDone).length;
 
   const META = {
     done: {
@@ -224,10 +246,15 @@
 
   store.meta = META[state] || META.done;
   store.metaFb = FB_META[state] || FB_META.done;
+  store.metaIg = {
+    running: false, phase: 'done', listComplete: true, delayMs: 7000,
+    found: igRecords.length, contactDone: igRecords.filter((r) => r.contactDone).length,
+    lastActivity: Date.now(), lastScan: { at: BASE, added: 2, updated: 0, removed: 0, incremental: false },
+  };
   store.platform = platform;
   store.lang = lang;
   // Must track DISCLAIMER_VERSION in panel.js, or every shot is a modal.
-  if (state !== 'disclaimer') store.disclaimer = 2;
+  if (state !== 'disclaimer') store.disclaimer = 3;
 
   // --- chrome.* stand-ins -------------------------------------------------
 
@@ -236,7 +263,7 @@
     // The panel checks chrome.runtime.id to tell a live extension from one that
     // has been reloaded out from under it. Without this the demo renders the
     // "extension was reloaded" notice instead of the interface.
-    runtime: { id: 'exportin-demo', getManifest: () => ({ version: '1.0.0' }) },
+    runtime: { id: 'exportin-demo', getManifest: () => ({ version: '1.1.0' }) },
     storage: {
       local: {
         async get(keys) {
@@ -267,7 +294,7 @@
       const out = new Set();
       for (const [key, rec] of Object.entries(store)) {
         if (!rec || !rec.publicId) continue;
-        out.add(key.startsWith('f:') ? 'fb:' + rec.publicId : rec.publicId);
+        out.add(key.startsWith('f:') ? 'fb:' + rec.publicId : key.startsWith('i:') ? 'ig:' + rec.publicId : rec.publicId);
       }
       return out;
     },

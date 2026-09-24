@@ -504,10 +504,10 @@ t('sortComparator ranks statuses by usefulness, not alphabetically', () => {
 t('every sortable column maps to a real sort key', () => {
   // An unknown key silently falls back to sorting by name, so a typo in the
   // markup would look like a working column that ignores you.
-  // Two header rows, one per network.
+  // Three header rows, one per network.
   const columns = [...panelHtml.matchAll(/data-sort="([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(columns.length, 10, 'six LinkedIn columns, four Facebook ones');
-  assert.equal(new Set(columns).size, 7, 'name, birthday and status are shared');
+  assert.equal(columns.length, 15, 'six LinkedIn columns, four Facebook ones, five Instagram ones');
+  assert.equal(new Set(columns).size, 8, 'name, email, phone, birthday and status are shared');
   for (const key of columns) assert.ok(SORT_KEYS[key], `lib.js has no sort key "${key}"`);
 });
 
@@ -1113,7 +1113,7 @@ t('translated headers rename the header row and nothing else', () => {
 t('every exported column has a slug in every translated locale', () => {
   // A missing slug silently falls back to the English key, which produces a CSV
   // with a French header row and one English column in the middle of it.
-  const all = new Set([...COLUMNS, ...FB_COLUMNS]);
+  const all = new Set([...COLUMNS, ...FB_COLUMNS, ...globalThis.LIB.IG_COLUMNS]);
   for (const locale of Object.keys(COLUMN_SLUGS)) {
     for (const column of all) {
       assert.ok(COLUMN_SLUGS[locale][column], `${locale} has no slug for ${column}`);
@@ -1141,5 +1141,117 @@ t('fbRecord keeps the delivered photo width', () => {
                              profile_picture: { uri: 'https://scontent.fbcdn.net/a.jpg' } });
   assert.ok(!('photoW' in noWidth), 'an absent width is absent, not zero');
 });
+
+// --- Instagram -------------------------------------------------------------
+
+{
+  const { igList, igProfile, igBlock, igMutuals, toRowIg, IG_COLUMNS } = globalThis.LIB;
+
+  t('igList reads a page and its cursor, and skips what is not a person', () => {
+    const page = igList({
+      users: [
+        { pk: 123, username: 'nina.b', full_name: 'Nina Bauer', profile_pic_url: 'https://x.cdninstagram.com/a.jpg', is_private: true },
+        { pk_id: '456', username: 'tom', full_name: '' },
+        { username: 'no_id' },
+        { pk: 789 },
+      ],
+      next_max_id: 'QVFE',
+    });
+    assert.deepEqual(page.people.map((p) => p.publicId), ['123', '456']);
+    assert.equal(page.people[0].firstName, 'Nina');
+    assert.equal(page.people[0].isPrivate, true);
+    assert.equal(page.next, 'QVFE');
+    assert.equal(page.raw, 4, 'raw counts what Instagram sent, so a broken parser shows');
+    assert.equal(igList({ users: [], next_max_id: null }).next, null);
+    assert.equal(igList({ users: [] , next_max_id: 50 }).next, '50', 'following sends a number');
+    assert.equal(igList(null).raw, 0);
+  });
+
+  t('only people who follow you back are kept', () => {
+    const following = new Map([['1', { publicId: '1' }], ['2', { publicId: '2' }], ['3', { publicId: '3' }]]);
+    assert.deepEqual(igMutuals(following, new Set(['2', '3', '9'])).map((p) => p.publicId), ['2', '3']);
+  });
+
+  t('igProfile takes business contact first and a bio email as a fallback', () => {
+    const biz = igProfile({ data: { user: {
+      username: 'studio', biography: 'Ceramics\nhello@other.fr',
+      business_email: 'shop@studio.fr', business_phone_number: '612345678', business_phone_country_code: '33',
+      external_url: 'https://studio.fr', category_name: 'Artist', edge_followed_by: { count: 1200 },
+    } } });
+    assert.equal(biz.email, 'shop@studio.fr');
+    assert.equal(biz.phone, '+33 612345678');
+    assert.equal(biz.website, 'https://studio.fr');
+    assert.equal(biz.category, 'Artist');
+    assert.equal(biz.followers, 1200);
+
+    const personal = igProfile({ data: { user: {
+      username: 'nina', biography: 'Berlin. Write to me: nina.b@mail.de :)',
+      business_email: null, external_url: null, bio_links: [{ url: 'https://linktr.ee/nina' }],
+    } } });
+    assert.equal(personal.email, 'nina.b@mail.de');
+    assert.equal(personal.phone, '');
+    assert.equal(personal.website, 'https://linktr.ee/nina');
+
+    // users/<id>/info: flat under `user`, other field names.
+    const info = igProfile({ user: {
+      username: 'nina', biography: 'Berlin', public_email: 'nina@mail.de', contact_phone_number: '+49 30 1234',
+      category: 'Photographer', follower_count: 310, hd_profile_pic_url_info: { url: 'https://x.cdninstagram.com/hd.jpg' },
+    }, status: 'ok' });
+    assert.equal(info.email, 'nina@mail.de');
+    assert.equal(info.phone, '+49 30 1234');
+    assert.equal(info.category, 'Photographer');
+    assert.equal(info.followers, 310);
+    assert.equal(info.photoUrl, 'https://x.cdninstagram.com/hd.jpg');
+
+    // PolarisProfilePageContentQuery, the route actually used: data.user, the
+    // fields the probe on a real account saw, and no business contact.
+    const gql = igProfile({ data: { user: {
+      username: 'manon', biography: 'Lyon · manon@atelier.fr', bio_links: [{ url: 'https://atelier.fr', title: '' }],
+      external_url: null, category: 'Artist', follower_count: 2048,
+    } }, extensions: {} });
+    assert.equal(gql.email, 'manon@atelier.fr');
+    assert.equal(gql.website, 'https://atelier.fr');
+    assert.equal(gql.followers, 2048);
+    assert.equal(gql.phone, '');
+
+    assert.equal(igProfile({ data: {} }), null, 'no user means a shape change, not an empty profile');
+    assert.equal(igProfile(null), null);
+  });
+
+  t('igBlock tells a rate limit, a checkpoint and a logout apart', () => {
+    assert.equal(igBlock(429, '', null), 'rateLimited');
+    assert.equal(igBlock(400, '', { message: 'Please wait a few minutes before you try again.' }), 'rateLimited');
+    assert.equal(igBlock(400, '', { message: 'feedback_required', spam: true }), 'rateLimited');
+    assert.equal(igBlock(400, '', { message: 'checkpoint_required', checkpoint_url: '/challenge/x' }), 'checkpoint');
+    assert.equal(igBlock(200, 'https://www.instagram.com/accounts/login/?next=x', null), 'noSession');
+    assert.equal(igBlock(401, '', { require_login: true }), 'noSession');
+    assert.equal(igBlock(200, 'https://www.instagram.com/api/v1/x', { status: 'ok' }), null);
+    assert.equal(igBlock(404, '', null), null, 'a missing profile is not a block');
+  });
+
+  t('an Instagram row fills every column and reuses the LinkedIn status', () => {
+    const rec = { publicId: '123', username: 'nina.b', name: 'Nina Bauer', firstName: 'Nina', lastName: 'Bauer',
+      email: 'nina.b@mail.de', contactDone: true, isVerified: true, followers: 0 };
+    const row = toRowIg(rec);
+    for (const c of IG_COLUMNS) assert.ok(c in row, `row has no ${c}`);
+    assert.equal(row.profileUrl, 'https://www.instagram.com/nina.b/');
+    assert.equal(row.followers, 0, 'zero followers is a number, not a blank');
+    assert.equal(rowStatus(rec), 'found');
+    assert.equal(rowStatus({ ...rec, email: '' }), 'empty');
+    assert.equal(rowStatus({ username: 'x' }), 'pending');
+    assert.equal(rowStatus({ contactDone: true, contactError: 'not found (HTTP 404)' }), 'blocked');
+  });
+
+  const src = await readFile(new URL('./dist/content-instagram.js', import.meta.url), 'utf8');
+  const manifest = JSON.parse(await readFile(new URL('./dist/manifest.json', import.meta.url), 'utf8'));
+  t('the Instagram worker only answers messages meant for it', () => {
+    assert.ok(src.includes("msg.platform !== 'instagram'"));
+    const cs = manifest.content_scripts.find((c) => c.js.includes('content-instagram.js'));
+    assert.deepEqual(cs.js, ['lib.js', 'content-instagram.js'], 'lib.js must load first');
+    const hook = manifest.content_scripts.find((c) => c.js.includes('fb-hook.js'));
+    assert.ok(hook.matches.includes('https://www.instagram.com/*'), 'profiles are learnt through the hook');
+    assert.equal(hook.world, 'MAIN');
+  });
+}
 
 console.log(`${passed} checks passed${process.exitCode ? ', some failed' : ''}`);
