@@ -1,0 +1,31 @@
+A birthday is the easiest reason to get back in touch with someone. LinkedIn and Facebook both know your contacts' birthdays, and neither lets you export them. ExportIn does.
+
+It collects every birthday it can find on both networks, with the contact details around it, and gives you one CSV per network, ready for an AI agent to enrich your CRM: match the same person across LinkedIn and Facebook, draft a message on the day, point out the people you have not spoken to in a year.
+
+LINKEDIN
+Name, headline, profile URL and the exact date you connected, then from each profile's Contact info panel: email, phone, birthday, website and Twitter when the person shares them. Two options add the exact company and location, and the About section.
+
+FACEBOOK
+Name, photo, profile URL, birthday with the birth year when the friend shares it, age, and the number of mutual friends. About 75 requests for 2000 friends.
+
+EXPORTS
+- CSV with the same birthday columns for both networks: an ISO date (1988-03-14) plus day, month and year as separate numbers
+- A yearly birthday calendar (.ics)
+- A ZIP with the CSV and every photo
+- JSON
+Column names follow the interface language: English, French or Spanish.
+
+HOW IT BEHAVES
+- Runs from a LinkedIn or Facebook tab it opens in the background, at a slow, adjustable pace
+- Caches everything locally: after the first run, a sync only fetches what changed
+- Stops at the first sign of rate limiting or a security check instead of retrying
+- Detects when LinkedIn or Facebook change their format, stops, and offers a prefilled bug report that contains no personal data
+
+PRIVACY
+No account, no server, no telemetry, no AI call. Everything stays in your browser. The only sites contacted are LinkedIn and Facebook, with your own session.
+
+PLEASE READ
+Automated collection is against LinkedIn's and Facebook's terms, and accounts have been restricted for it. The slow default pace lowers that risk; it does not remove it. What you export is other people's personal data: once it is in your CRM or given to an AI service, you are responsible for it under the GDPR and similar laws.
+
+Free and open source (MIT), made by tonoïd.
+Source code and issues: https://github.com/tonoid/ExportIn

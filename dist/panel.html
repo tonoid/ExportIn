@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ExportIn</title>
+    <link rel="icon" href="icons/32.png" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f6f5;
+        --card: #ffffff;
+        --fg: #171717;
+        --muted: #6d6d6a;
+        --faint: #9a9a95;
+        --line: #e2e2df;
+        --track: #e8e8e5;
+        --hover: #f4f4f2;
+        --accent: #0a66c2;
+        --bad: #b42318;
+        --warn: #8a5a00;
+        --warn-bg: #fdf4e3;
+        --good: #067647;
+        /* tonoïd brand, from the palette on tonoid.com. The lavender itself is
+           too light on a white page, so light mode uses a darkened same-hue
+           variant and keeps #c7c2ea for dark. */
+        --brand: #4e4785;
+        --brand-soft: #eeecf8;
+        --brand-line: #d8d3ee;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #131313;
+          --card: #1c1c1b;
+          --fg: #ededea;
+          --muted: #9b9b96;
+          --faint: #6e6e69;
+          --line: #302f2e;
+          --track: #2a2a28;
+          --hover: #232322;
+          --accent: #5aa9f0;
+          --bad: #f97066;
+          --warn: #f0c46b;
+          --warn-bg: #2e2617;
+          --good: #4ade80;
+          --brand: #c7c2ea;
+          --brand-soft: #2d2a4a;
+          --brand-line: #433f68;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 40px 16px 64px;
+        background: var(--bg); color: var(--fg);
+        font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main { width: 100%; max-width: 1040px; margin: 0 auto; }
+
+      header { margin-bottom: 20px; }
+      h1 { font-size: 20px; font-weight: 600; margin: 0 0 3px; letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); font-size: 13px; }
+
+      section {
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 12px; padding: 18px; margin-bottom: 14px;
+      }
+
+      /* --- control card --- */
+      .top { display: grid; grid-template-columns: 1fr 250px; gap: 28px; align-items: start; }
+      @media (max-width: 720px) { .top { grid-template-columns: 1fr; gap: 18px; } }
+
+      .stats { display: flex; gap: 36px; margin-bottom: 16px; }
+      .stat b {
+        display: block; font-size: 30px; font-weight: 600;
+        font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1;
+      }
+      .stat span {
+        display: block; margin-top: 2px; color: var(--muted);
+        font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      }
+
+      #track { height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; margin-bottom: 7px; }
+      #bar { height: 100%; width: 0%; border-radius: 3px; background: var(--accent); transition: width 0.4s ease; }
+      #track.indeterminate #bar { width: 35%; animation: slide 1.4s ease-in-out infinite; }
+      @keyframes slide {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(340%); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #track.indeterminate #bar { animation: none; width: 100%; opacity: 0.35; }
+        #bar { transition: none; }
+      }
+
+      .meter {
+        display: flex; justify-content: space-between; gap: 12px;
+        color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums;
+      }
+      #status { margin: 14px 0 0; font-size: 13px; min-height: 20px; }
+      #status.err { color: var(--bad); }
+      #status.ok { color: var(--good); }
+      /* The most recent names stack up and fade out behind the newest one, so
+         the run reads as motion rather than a single flickering line. */
+      #current { margin: 4px 0 0; min-height: 72px; }
+      #current:empty { min-height: 0; }
+      .seen {
+        font-size: 12px; line-height: 1.5; color: var(--muted);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        opacity: calc(1 - var(--depth, 0) * 0.26);
+        animation: seen-in 0.4s ease both;
+        transition: opacity 0.5s ease;
+      }
+      .seen { display: flex; align-items: center; gap: 8px; }
+      .seen:first-child { color: var(--fg); }
+      .seen .avatar { width: 22px; height: 22px; font-size: 9px; }
+      .seen span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      @keyframes seen-in {
+        from { opacity: 0; transform: translateY(-5px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .seen { animation: none; transition: none; }
+      }
+
+      .meter { align-items: baseline; }
+      #eta { text-align: right; }
+
+      .check {
+        display: flex; align-items: flex-start; gap: 8px; margin-top: 10px;
+        color: var(--muted); font-size: 12.5px; cursor: pointer;
+      }
+      .check input { margin: 3px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
+      .check small { display: block; color: var(--faint); font-size: 11px; line-height: 1.4; }
+
+      #notice {
+        display: none; margin-bottom: 14px; padding: 10px 12px;
+        background: var(--warn-bg); color: var(--warn);
+        border: 1px solid currentColor; border-radius: 8px; font-size: 12.5px;
+      }
+      #notice.show { display: flex; align-items: center; gap: 10px; }
+      #noticeText { flex: 1; }
+      .noticebtn {
+        display: none; flex: 0 0 auto; padding: 5px 11px; font-size: 12.5px;
+        border: 1px solid currentColor; border-radius: 6px;
+        background: transparent; color: inherit; cursor: pointer; white-space: nowrap;
+      }
+      .noticebtn.show { display: inline-flex; }
+      .noticebtn:hover { background: var(--card); }
+
+      .pace { margin-top: 4px; }
+      #paceSummary {
+        margin: 10px 0 0; color: var(--muted); font-size: 12px;
+        font-variant-numeric: tabular-nums; line-height: 1.5;
+      }
+      #paceSummary .warn { display: block; color: var(--warn); }
+      #settings { max-width: 420px; }
+      #settings h2 { margin: 0 0 18px; font-size: 16px; font-weight: 600; text-transform: none; letter-spacing: -0.01em; color: var(--fg); }
+      #settings .row { margin-top: 20px; }
+      .pacelabel {
+        display: block; margin-bottom: 6px; color: var(--muted);
+        font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      }
+      .segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+      .segmented button {
+        flex: 1; padding: 6px 4px; border: 0; border-radius: 0;
+        font-size: 12.5px; color: var(--muted); background: transparent;
+      }
+      .segmented button + button { border-left: 1px solid var(--line); }
+      .segmented button:hover:not([aria-pressed='true']) { color: var(--accent); }
+      .segmented button[aria-pressed='true'] {
+        background: var(--accent); color: #fff; font-weight: 500;
+      }
+      .segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+      #paceInfo {
+        margin: 7px 0 0; color: var(--muted); font-size: 12px;
+        font-variant-numeric: tabular-nums; min-height: 17px;
+      }
+      #paceInfo .warn { display: block; margin-top: 3px; color: var(--warn); }
+      #paceCustom { margin-top: 8px; }
+      #paceCustom summary {
+        list-style: none; cursor: pointer; color: var(--faint);
+        font-size: 11.5px; text-decoration: underline;
+      }
+      #paceCustom summary::-webkit-details-marker { display: none; }
+      #paceCustom summary:hover { color: var(--accent); }
+      #paceCustom .field { margin-top: 8px; }
+
+      .titlerow { display: flex; align-items: baseline; gap: 10px; }
+      .brand {
+        display: inline-flex; align-items: baseline; gap: 5px;
+        padding: 2px 9px; border-radius: 999px;
+        background: var(--brand-soft); border: 1px solid var(--brand-line);
+        text-decoration: none; font-size: 11px; line-height: 1.7;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .brand .by { color: var(--brand); opacity: 0.65; }
+      .brand .wordmark { color: var(--brand); font-weight: 600; letter-spacing: 0.01em; }
+      .brand:hover { border-color: var(--brand); }
+      .brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+      .row { display: flex; gap: 9px; }
+      .row + .row { margin-top: 9px; }
+      button {
+        padding: 9px 12px; border-radius: 8px;
+        border: 1px solid var(--line); background: transparent; color: var(--fg);
+        font: inherit; font-size: 13px; cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+      }
+      .row button { flex: 1; }
+      button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      button:disabled { opacity: 0.4; cursor: default; }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.1); }
+
+      .field { display: flex; align-items: center; gap: 9px; margin-top: 12px; color: var(--muted); font-size: 12.5px; }
+      input[type='number'], input[type='search'] {
+        padding: 5px 8px; border: 1px solid var(--line);
+        border-radius: 6px; background: transparent; color: var(--fg); font: inherit;
+      }
+      input[type='number'] { width: 74px; }
+      input[type='search'] { width: 190px; font-size: 13px; }
+      input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+      /* --- list card --- */
+      .listhead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+      .listhead h2 {
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.06em; color: var(--muted); margin: 0;
+      }
+      .spacer { flex: 1; }
+
+      /* Native disclosure instead of a hand-rolled popup menu. */
+      .menu { position: relative; }
+      .menu > summary {
+        list-style: none; cursor: pointer; user-select: none;
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 9px 14px; border-radius: 8px; font-size: 13px;
+        background: var(--accent); color: #fff; border: 1px solid var(--accent);
+      }
+      .menu > summary::-webkit-details-marker { display: none; }
+      .menu > summary:hover { filter: brightness(1.1); }
+      .menu > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .menuitems {
+        position: absolute; right: 0; top: calc(100% + 6px); z-index: 10;
+        min-width: 256px; padding: 6px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      }
+      .menuitems button {
+        width: 100%; text-align: left; border: 0;
+        border-radius: 6px; padding: 8px 10px;
+      }
+      .menuitems button:hover { background: var(--hover); color: var(--fg); }
+      .menuitems small { display: block; color: var(--faint); font-size: 11px; }
+      .menuitems hr { border: 0; border-top: 1px solid var(--line); margin: 5px 2px; }
+      .menuitems button.danger:hover { color: var(--bad); }
+
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      th { text-align: left; border-bottom: 1px solid var(--line); }
+      td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+      tbody tr:hover { background: var(--hover); }
+      tbody tr:last-child td { border-bottom: 0; }
+      .c-who { width: auto; }
+      .c-date { width: 104px; }
+      .c-email { width: 210px; }
+      .c-phone { width: 132px; }
+      .c-bday { width: 116px; }
+      .c-status { width: 96px; }
+      @media (max-width: 900px) {
+        .c-phone, .c-bday { display: none; }
+      }
+
+      .who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .avatar {
+        flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%;
+        object-fit: cover; background: var(--track);
+        display: grid; place-items: center;
+        font-size: 11px; font-weight: 600; color: var(--muted);
+      }
+      .who .names { min-width: 0; }
+      .who a {
+        display: block; color: inherit; text-decoration: none; font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .who a:hover { color: var(--accent); text-decoration: underline; }
+      .who small {
+        display: block; color: var(--muted); font-size: 11.5px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .trunc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      td.num { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
+      .dash { color: var(--faint); }
+
+      .chip {
+        display: inline-block; padding: 2px 8px; border-radius: 999px;
+        font-size: 11px; border: 1px solid currentColor; white-space: nowrap;
+      }
+      .chip.pending { color: var(--faint); }
+      .chip.found { color: var(--good); }
+      .chip.empty { color: var(--muted); }
+      .chip.blocked { color: var(--warn); }
+      .chip.removed { color: var(--bad); }
+
+      .headrow { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+      /* Same height as the language select, so both sit on one line. */
+      .headlinks { display: flex; align-items: center; gap: 16px; min-height: 34px; flex-wrap: wrap; }
+      .headrow .spacer { flex: 1; }
+      select {
+        padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px;
+        background: var(--card); color: var(--fg); font: inherit; font-size: 12.5px;
+      }
+      select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+      #diff {
+        display: none; align-items: center; flex-wrap: wrap; gap: 8px 14px;
+        margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+        font-size: 12.5px; color: var(--muted);
+      }
+      #diff.show { display: flex; }
+      .dchip { color: var(--fg); }
+      .dchip b { font-variant-numeric: tabular-nums; }
+      .dchip.zero { color: var(--faint); }
+      .dchip.zero b { font-weight: 500; }
+
+      .pager {
+        display: flex; align-items: center; justify-content: center;
+        gap: 14px; margin-top: 14px; color: var(--muted); font-size: 12.5px;
+      }
+      .pager button { padding: 6px 12px; }
+
+      svg.lucide { flex: 0 0 auto; }
+      .spin { animation: spin 0.9s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+      [hidden] { display: none !important; }
+      button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+      /* align-items: flex-start keeps the icon on the first line when a hint wraps */
+      .menuitems button { display: flex; align-items: flex-start; justify-content: flex-start; gap: 10px; }
+      .menuitems svg.lucide { margin-top: 2px; }
+      .menuitems .mlabel { display: flex; flex-direction: column; gap: 1px; text-align: left; }
+      .menuitems small { line-height: 1.35; }
+
+      th button {
+        display: flex; align-items: center; gap: 5px;
+        width: 100%; padding: 0 0 8px; border: 0; background: none;
+        font: inherit; font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+        text-transform: uppercase; color: var(--muted); cursor: pointer;
+      }
+      th button:hover { color: var(--accent); }
+      th button .sorti { opacity: 0; transition: opacity 0.12s; }
+      th button:hover .sorti { opacity: 0.45; }
+      th[aria-sort='ascending'] button, th[aria-sort='descending'] button { color: var(--fg); }
+      th[aria-sort='ascending'] button .sorti, th[aria-sort='descending'] button .sorti { opacity: 1; }
+      th { padding: 0 10px; }
+      .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      dialog {
+        max-width: 520px; padding: 26px; border: 1px solid var(--line);
+        border-radius: 14px; background: var(--card); color: var(--fg);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      }
+      dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+      dialog h2 {
+        margin: 0 0 14px; font-size: 17px; font-weight: 600;
+        text-transform: none; letter-spacing: -0.01em; color: var(--fg);
+      }
+      dialog p { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+      dialog p:last-of-type { margin-bottom: 20px; }
+      dialog .row button { flex: 1; }
+
+      #resetAll:hover { color: var(--bad); }
+      .linkish {
+        padding: 0; border: 0; background: none; color: var(--muted);
+        font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer;
+      }
+      .linkish:hover { color: var(--accent); }
+
+      #empty { color: var(--muted); text-align: center; padding: 34px 0; font-size: 13px; }
+
+      /* The accent follows the network you are looking at, so the tab you are on
+         is obvious without reading the label. */
+      body[data-platform="facebook"] { --accent: #0866ff; }
+      @media (prefers-color-scheme: dark) {
+        body[data-platform="facebook"] { --accent: #6aa8ff; }
+      }
+      .tabs { display: flex; gap: 4px; margin: 16px 0 0; border-bottom: 1px solid var(--line); }
+      .tabs button {
+        border: 0; background: none; border-radius: 0; padding: 9px 14px;
+        font-size: 13px; font-weight: 600; color: var(--muted);
+        border-bottom: 2px solid transparent; display: inline-flex; gap: 7px; align-items: center;
+      }
+      .tabs button:hover { color: var(--fg); background: none; }
+      .tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+      .tabs .count { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+      /* A conic fill cut into a ring by a mask: the share of the job done. While
+         the length is still unknown it is a quarter arc going round instead. */
+      .ring {
+        width: 13px; height: 13px; border-radius: 50%; flex: none;
+        background: conic-gradient(var(--accent) calc(var(--p, 0) * 1%), var(--line) 0);
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+        mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+      }
+      .ring.unknown { --p: 25; animation: spin 0.9s linear infinite; }
+      body[data-platform="linkedin"] .fb-only { display: none; }
+      body[data-platform="facebook"] .li-only { display: none; }
+      .names .extra { color: var(--faint); font-size: 11px; }
+      .c-age { width: 64px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="headrow">
+        <div>
+          <div class="titlerow">
+            <h1>ExportIn</h1>
+            <a class="brand" href="https://www.tonoid.com/fr" target="_blank" rel="noreferrer">
+              <span class="by" data-i18n="brandBy">by</span><span class="wordmark">tono&iuml;d</span>
+            </a>
+          </div>
+          <p data-i18n="tagline">LinkedIn connections to CSV</p>
+        </div>
+        <div class="spacer"></div>
+        <nav class="headlinks">
+          <button id="showDisclaimer" class="linkish"><span data-i18n="disclaimerLink">Disclaimer</span></button>
+          <button id="reportProblem" class="linkish"><span data-i18n="reportProblem">Report a problem</span></button>
+          <a class="linkish" href="https://github.com/tonoid/ExportIn" target="_blank" rel="noreferrer">GitHub</a>
+          <button id="resetAll" class="linkish"><span data-i18n="resetAll">Reset everything</span></button>
+        </nav>
+        <label class="sr" for="lang" data-i18n="language">Language</label>
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+        </select>
+      </header>
+
+      <nav class="tabs" role="tablist">
+        <button id="tab-linkedin" type="button" role="tab" data-platform="linkedin" aria-selected="true">
+          LinkedIn<span class="count" id="count-linkedin"></span><span class="ring" id="ring-linkedin" role="progressbar" hidden></span>
+        </button>
+        <button id="tab-facebook" type="button" role="tab" data-platform="facebook" aria-selected="false">
+          Facebook<span class="count" id="count-facebook"></span><span class="ring" id="ring-facebook" role="progressbar" hidden></span>
+        </button>
+      </nav>
+
+      <div id="notice" role="status">
+        <span id="noticeText"></span>
+        <button id="noticeAction" class="noticebtn"></button>
+      </div>
+
+      <section>
+        <div class="top">
+          <div>
+            <div class="stats">
+              <div class="stat"><b id="found">0</b><span data-i18n="connections" data-i18n-fb="friends">Connections</span></div>
+              <div class="stat"><b id="enriched">0</b><span id="enrichedLabel" data-i18n="detailsFetched">Details fetched</span></div>
+              <div class="stat"><b id="photocount">0</b><span data-i18n="photos">Photos</span></div>
+            </div>
+            <div id="track"><div id="bar"></div></div>
+            <div class="meter">
+              <span id="pct">Not started</span>
+              <span id="eta"></span>
+            </div>
+            <p id="status">Idle.</p>
+            <div id="current" aria-live="polite"></div>
+          </div>
+          <div>
+            <div class="row">
+              <button id="start" class="primary"><span data-i18n="start">Start</span></button>
+              <button id="pause" disabled><span data-i18n="pause">Pause</span></button>
+            </div>
+            <div class="row">
+              <button id="check"><span data-i18n="checkChanges">Check for changes</span></button>
+            </div>
+            <div class="row">
+              <button id="photos"><span data-i18n="savePhotos">Save photos</span></button>
+            </div>
+            <div class="row li-only">
+              <button id="settingsBtn"><span data-i18n="settings">Settings</span></button>
+            </div>
+            <p id="paceSummary" class="li-only"></p>
+            </div>
+          </div>
+        </div>
+        <div id="diff"></div>
+      </section>
+
+      <section>
+        <div class="listhead">
+          <h2 data-i18n="connections" data-i18n-fb="friends">Connections</h2>
+          <input id="search" type="search" data-i18n-placeholder="filterPlaceholder" data-i18n-placeholder-fb="filterPlaceholderFb" placeholder="Filter by name or company" />
+          <select id="statusFilter">
+            <option value="" data-i18n="allStatuses">All statuses</option>
+            <option value="found" data-i18n="st_found">Found</option>
+            <option value="pending" class="li-only" data-i18n="st_pending">Pending</option>
+            <option value="empty" data-i18n="st_empty">Nothing</option>
+            <option value="blocked" data-i18n="st_blocked">No access</option>
+            <option value="removed" data-i18n="st_removed">Removed</option>
+          </select>
+          <div class="spacer"></div>
+          <details class="menu" id="menu">
+            <summary><span data-i18n="export">Export</span></summary>
+            <div class="menuitems">
+              <button id="csv"><span class="mlabel"><span data-i18n="csv">CSV</span><small data-i18n="csvHint">All fields, opens in Excel</small></span></button>
+              <button id="ics"><span class="mlabel"><span data-i18n="ics">Birthdays</span><small data-i18n="icsHint">Yearly .ics calendar events</small></span></button>
+              <button id="zip"><span class="mlabel"><span data-i18n="zip">ZIP archive</span><small data-i18n="zipHint">CSV plus every saved photo</small></span></button>
+              <button id="json"><span class="mlabel"><span data-i18n="json">JSON</span><small data-i18n="jsonHint">Raw records</small></span></button>
+              <hr />
+              <button id="rescan"><span class="mlabel"><span data-i18n="fullRescan">Full rescan</span><small data-i18n="fullRescanHint">Walks every page, finds removals</small></span></button>
+              <button id="clear" class="danger"><span class="mlabel"><span data-i18n="clear">Clear stored data</span><small data-i18n="clearHint">Deletes everything collected</small></span></button>
+            </div>
+          </details>
+        </div>
+
+        <table>
+          <thead>
+            <tr class="li-only">
+              <th class="c-who" data-sort="name" aria-sort="none"><button type="button"><span data-i18n="colName">Name</span><span class="sorti"></span></button></th>
+              <th class="c-date" data-sort="connected" aria-sort="none"><button type="button"><span data-i18n="colConnected">Connected</span><span class="sorti"></span></button></th>
+              <th class="c-email" data-sort="email" aria-sort="none"><button type="button"><span data-i18n="colEmail">Email</span><span class="sorti"></span></button></th>
+              <th class="c-phone" data-sort="phone" aria-sort="none"><button type="button"><span data-i18n="colPhone">Phone</span><span class="sorti"></span></button></th>
+              <th class="c-bday" data-sort="birthday" aria-sort="none"><button type="button"><span data-i18n="colBirthday">Birthday</span><span class="sorti"></span></button></th>
+              <th class="c-status" data-sort="status" aria-sort="none"><button type="button"><span data-i18n="colStatus">Status</span><span class="sorti"></span></button></th>
+            </tr>
+            <tr class="fb-only">
+              <th class="c-who" data-sort="name" aria-sort="none"><button type="button"><span data-i18n="colName">Name</span><span class="sorti"></span></button></th>
+              <th class="c-bday" data-sort="birthday" aria-sort="none"><button type="button"><span data-i18n="colBirthday">Birthday</span><span class="sorti"></span></button></th>
+              <th class="c-age" data-sort="age" aria-sort="none"><button type="button"><span data-i18n="colAge">Age</span><span class="sorti"></span></button></th>
+              <th class="c-status" data-sort="status" aria-sort="none"><button type="button"><span data-i18n="colStatus">Status</span><span class="sorti"></span></button></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+
+        <div id="empty">No connections yet. Press Start.</div>
+
+        <div class="pager">
+          <button id="prev"><span data-i18n="prev">Previous</span></button>
+          <span id="pageinfo"></span>
+          <button id="next"><span data-i18n="next">Next</span></button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="settings">
+      <h2 data-i18n="settings">Settings</h2>
+            <div class="pace">
+          <span class="pacelabel" data-i18n="pace">Pace</span>
+          <div class="segmented" id="pace" role="group">
+            <button type="button" data-delay="7000"><span data-i18n="paceCautious">Cautious</span></button>
+            <button type="button" data-delay="4000"><span data-i18n="paceBalanced">Balanced</span></button>
+            <button type="button" data-delay="2000"><span data-i18n="paceFast">Fast</span></button>
+          </div>
+          <p id="paceInfo"></p>
+          <label class="check li-only">
+            <input id="withProfile" type="checkbox" />
+            <span>
+              <span data-i18n="deepScan">Exact job and location</span>
+              <small data-i18n="deepScanHint">One extra request per profile.</small>
+            </span>
+          </label>
+          <label class="check li-only">
+            <input id="withAbout" type="checkbox" />
+            <span>
+              <span data-i18n="deepAbout">About section</span>
+              <small data-i18n="deepAboutHint">One more request again.</small>
+            </span>
+          </label>
+          <details id="paceCustom">
+            <summary><span data-i18n="paceCustomLabel">Custom delay</span></summary>
+            <div class="field">
+              <input id="delay" type="number" min="1000" step="500" value="4000" />
+              <span data-i18n="msPerProfile">ms per profile</span>
+            </div>
+          </details>
+
+      <div class="row">
+        <button id="settingsClose" class="primary"><span data-i18n="settingsDone">Done</span></button>
+      </div>
+    </dialog>
+
+    <dialog id="disclaimer">
+      <h2 data-i18n="disclaimerTitle">Read this before you start</h2>
+      <p data-i18n="disclaimerP1"></p>
+      <p data-i18n="disclaimerP2"></p>
+      <p data-i18n="disclaimerP3"></p>
+      <div class="row">
+        <button id="accept" class="primary"><span data-i18n="disclaimerAccept">I understand and accept the risk</span></button>
+      </div>
+    </dialog>
+
+    <script src="i18n.js"></script>
+    <script src="icons.js"></script>
+    <script src="zip.js"></script>
+    <script src="photos.js"></script>
+    <script src="lib.js"></script>
+    <script src="panel.js"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+build/
+demo/index.html
+node_modules/
+.DS_Store
+
+# Exports produits par l'extension : ils contiennent les données personnelles
+# de vos relations et ne doivent jamais être commités.
+linkedin-connections-*.csv
+linkedin-connections-*.json
+linkedin-birthdays-*.ics
+facebook-friends-*.csv
+facebook-friends-*.json
+facebook-birthdays-*.ics
+exportin-*.zip
+._*
