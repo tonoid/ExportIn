@@ -49,7 +49,7 @@ ExportIn no llama a ninguna IA y no envía nada a ningún sitio. Recopila a un r
 
 ## Instalación
 
-La extensión todavía no está en la Chrome Web Store. Cárgala en modo desarrollador:
+**[Instalar desde la Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. La ficha está en revisión; mientras no se publique, el enlace muestra una página vacía. Mientras tanto, descarga `exportin-1.0.0.zip` desde la [última versión](https://github.com/tonoid/ExportIn/releases/latest), o carga el código fuente en modo desarrollador:
 
 ```bash
 git clone https://github.com/tonoid/ExportIn

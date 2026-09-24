@@ -49,7 +49,7 @@ ExportIn itself calls no AI and sends nothing anywhere. It collects at a slow, a
 
 ## Install
 
-The extension is not on the Chrome Web Store yet. Load it in developer mode:
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. The listing is under review; until it goes live, the link shows an empty page. In the meantime, download `exportin-1.0.0.zip` from the [latest release](https://github.com/tonoid/ExportIn/releases/latest), or load the source in developer mode:
 
 ```bash
 git clone https://github.com/tonoid/ExportIn
