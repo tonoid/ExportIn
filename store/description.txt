@@ -1,6 +1,6 @@
 A birthday is the easiest reason to get back in touch with someone. LinkedIn and Facebook both know your contacts' birthdays, and neither lets you export them. ExportIn does.
 
-It collects every birthday it can find on both networks, with the contact details around it, and gives you one CSV per network, ready for an AI agent to enrich your CRM: match the same person across LinkedIn and Facebook, draft a message on the day, point out the people you have not spoken to in a year.
+It collects every birthday it can find on both networks, with the contact details around it, and gives you one CSV per network, ready for an AI agent to enrich your CRM: match the same person across LinkedIn and Facebook, point out the people you have not spoken to in a year.
 
 LINKEDIN
 Name, headline, profile URL and the exact date you connected, then from each profile's Contact info panel: email, phone, birthday, website and Twitter when the person shares them. Two options add the exact company and location, and the About section.

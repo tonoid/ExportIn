@@ -2,7 +2,7 @@
 
 # ExportIn
 
-**A Chrome extension that gets your contacts' birthdays out of LinkedIn and Facebook, and your Instagram mutuals' contact details, so an AI agent can enrich your CRM. Wish people a happy birthday on the day, and reconnect with the ones you have lost touch with. Free and open source.**
+**A Chrome extension that gets your contacts' birthdays out of LinkedIn and Facebook, and your Instagram mutuals' contact details, into CSV files for your CRM. Everything stays in your browser. Who you write to, and what you say, is up to you. Free and open source.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Made by tonoïd](https://img.shields.io/badge/made%20by-tono%C3%AFd-4e4785.svg)](https://www.tonoid.com)
@@ -34,7 +34,7 @@ A birthday is the easiest reason there is to get back in touch with someone. The
 - LinkedIn's official export (Settings, Data privacy, Get a copy of your data) gives names, companies, titles, the date you connected, and sometimes an email. **No birthdays, no phone numbers, no photos.** Those live in each profile's Contact info panel, one profile at a time.
 - Facebook's own download lists your friends and when you became friends. No birthday, no photo.
 
-ExportIn gets every birthday it can find on both networks, with the details around it, into one CSV per network. The two files share the same birthday columns. They are meant to feed an AI agent that enriches your CRM: match the same person across LinkedIn and Facebook, fill in their birthday, draft a message on the day, point out the people you have not spoken to in a year. You stop learning about a birthday from a notification the day after.
+ExportIn gets every birthday it can find on both networks, with the details around it, into one CSV per network. The two files share the same birthday columns. They are meant to feed an AI agent that enriches your CRM: match the same person across LinkedIn and Facebook, fill in their birthday, point out the people you have not spoken to in a year. You stop learning about a birthday from a notification the day after.
 
 Instagram has no birthdays to give. Its tab exports the people you follow who follow you back, with the bio, link, category and follower count, and any email written in the bio. That is enough to tie an Instagram handle to someone already in your CRM.
 
@@ -51,7 +51,7 @@ ExportIn itself calls no AI and sends nothing anywhere. It collects at a slow, a
 
 ## Install
 
-**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. The listing is under review; until it goes live, the link shows an empty page. In the meantime, download `exportin-1.1.0.zip` from the [latest release](https://github.com/tonoid/ExportIn/releases/latest), or load the source in developer mode:
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. Or download `exportin-1.1.0.zip` from the [latest release](https://github.com/tonoid/ExportIn/releases/latest), or load the source in developer mode:
 
 ```bash
 git clone https://github.com/tonoid/ExportIn

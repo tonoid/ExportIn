@@ -2,7 +2,7 @@
 
 # ExportIn
 
-**Une extension Chrome qui sort de LinkedIn et de Facebook les anniversaires de vos contacts avec leurs coordonnées, et d'Instagram les coordonnées de vos abonnés mutuels, pour qu'un agent IA enrichisse votre CRM. Souhaitez les anniversaires le jour même, et reprenez contact avec ceux que vous avez perdus de vue. Gratuite et open source.**
+**Une extension Chrome qui sort de LinkedIn et de Facebook les anniversaires de vos contacts avec leurs coordonnées, et d'Instagram les coordonnées de vos abonnés mutuels, dans des fichiers CSV pour votre CRM. Tout reste dans votre navigateur. À qui écrire, et quoi dire, c'est vous qui décidez. Gratuite et open source.**
 
 [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Créé par tonoïd](https://img.shields.io/badge/made%20by-tono%C3%AFd-4e4785.svg)](https://www.tonoid.com/fr)
@@ -34,7 +34,7 @@ Un anniversaire est la meilleure excuse pour reprendre contact avec quelqu'un. L
 - L'export officiel de LinkedIn (Préférences, Confidentialité des données, Obtenir une copie de vos données) donne les noms, les entreprises, les postes, la date de mise en relation, et parfois un e-mail. **Ni anniversaires, ni téléphones, ni photos.** Ils se trouvent dans le panneau Coordonnées de chaque profil, un profil à la fois.
 - Le téléchargement proposé par Facebook liste vos amis et la date à laquelle vous êtes devenus amis. Pas d'anniversaire, pas de photo.
 
-ExportIn récupère tous les anniversaires qu'il trouve sur les deux réseaux, avec les informations qui les entourent, dans un CSV par réseau. Les deux fichiers partagent les mêmes colonnes d'anniversaire. Ils sont faits pour alimenter un agent IA qui enrichit votre CRM : reconnaître la même personne sur LinkedIn et Facebook, compléter son anniversaire, rédiger un message le jour J, signaler les gens à qui vous n'avez pas parlé depuis un an. Vous n'apprenez plus un anniversaire par une notification le lendemain.
+ExportIn récupère tous les anniversaires qu'il trouve sur les deux réseaux, avec les informations qui les entourent, dans un CSV par réseau. Les deux fichiers partagent les mêmes colonnes d'anniversaire. Ils sont faits pour alimenter un agent IA qui enrichit votre CRM : reconnaître la même personne sur LinkedIn et Facebook, compléter son anniversaire, signaler les gens à qui vous n'avez pas parlé depuis un an. Vous n'apprenez plus un anniversaire par une notification le lendemain.
 
 Instagram n'a pas d'anniversaires à donner. Son onglet exporte les personnes que vous suivez et qui vous suivent en retour, avec la bio, le lien, la catégorie, le nombre d'abonnés, et un e-mail s'il est écrit dans la bio. Cela suffit pour relier un pseudo Instagram à quelqu'un déjà présent dans votre CRM.
 
@@ -51,7 +51,7 @@ ExportIn n'appelle lui-même aucune IA et n'envoie rien nulle part. Il collecte 
 
 ## Installation
 
-**[Installer depuis le Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. La fiche est en cours de validation ; tant qu'elle n'est pas publiée, le lien affiche une page vide. En attendant, téléchargez `exportin-1.1.0.zip` depuis la [dernière version](https://github.com/tonoid/ExportIn/releases/latest), ou chargez le code source en mode développeur :
+**[Installer depuis le Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. Ou téléchargez `exportin-1.1.0.zip` depuis la [dernière version](https://github.com/tonoid/ExportIn/releases/latest), ou chargez le code source en mode développeur :
 
 ```bash
 git clone https://github.com/tonoid/ExportIn

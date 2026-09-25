@@ -2,7 +2,7 @@
 
 # ExportIn
 
-**Una extensión de Chrome que saca de LinkedIn y Facebook los cumpleaños de tus contactos, y de Instagram los datos de contacto de tus seguidores mutuos, para que un agente de IA enriquezca tu CRM. Felicita a la gente el mismo día y retoma el contacto con quienes has perdido de vista. Gratuita y de código abierto.**
+**Una extensión de Chrome que saca de LinkedIn y Facebook los cumpleaños de tus contactos, y de Instagram los datos de contacto de tus seguidores mutuos, en archivos CSV para tu CRM. Todo se queda en tu navegador. A quién escribir, y qué decirle, lo decides tú. Gratuita y de código abierto.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Made by tonoïd](https://img.shields.io/badge/made%20by-tono%C3%AFd-4e4785.svg)](https://www.tonoid.com)
@@ -34,7 +34,7 @@ Un cumpleaños es la excusa más fácil para retomar el contacto con alguien. Lo
 - La exportación oficial de LinkedIn (Preferencias, Privacidad de datos, Obtener una copia de tus datos) da nombres, empresas, cargos, la fecha de conexión y a veces un correo. **Ni cumpleaños, ni teléfonos, ni fotos.** Esos datos están en el panel Información de contacto de cada perfil, un perfil cada vez.
 - La descarga de datos de Facebook lista a tus amigos y la fecha en que empezó la amistad. Ni cumpleaños ni foto.
 
-ExportIn saca todos los cumpleaños que encuentra en las dos redes, con los datos que los acompañan, en un CSV por red. Los dos archivos comparten las mismas columnas de cumpleaños. Están pensados para alimentar a un agente de IA que enriquezca tu CRM: reconocer a la misma persona en LinkedIn y Facebook, completar su cumpleaños, redactar un mensaje ese día, señalar a la gente con la que no hablas desde hace un año. Dejas de enterarte de un cumpleaños por una notificación al día siguiente.
+ExportIn saca todos los cumpleaños que encuentra en las dos redes, con los datos que los acompañan, en un CSV por red. Los dos archivos comparten las mismas columnas de cumpleaños. Están pensados para alimentar a un agente de IA que enriquezca tu CRM: reconocer a la misma persona en LinkedIn y Facebook, completar su cumpleaños, señalar a la gente con la que no hablas desde hace un año. Dejas de enterarte de un cumpleaños por una notificación al día siguiente.
 
 Instagram no tiene cumpleaños que dar. Su pestaña exporta a las personas que sigues y que te siguen, con la biografía, el enlace, la categoría, el número de seguidores y cualquier correo escrito en la biografía. Basta para vincular un usuario de Instagram con alguien que ya está en tu CRM.
 
@@ -51,7 +51,7 @@ ExportIn no llama a ninguna IA y no envía nada a ningún sitio. Recopila a un r
 
 ## Instalación
 
-**[Instalar desde la Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. La ficha está en revisión; mientras no se publique, el enlace muestra una página vacía. Mientras tanto, descarga `exportin-1.1.0.zip` desde la [última versión](https://github.com/tonoid/ExportIn/releases/latest), o carga el código fuente en modo desarrollador:
+**[Instalar desde la Chrome Web Store](https://chromewebstore.google.com/detail/leninmleheiaooeecleicccbceiahlhi)**. O descarga `exportin-1.1.0.zip` desde la [última versión](https://github.com/tonoid/ExportIn/releases/latest), o carga el código fuente en modo desarrollador:
 
 ```bash
 git clone https://github.com/tonoid/ExportIn
